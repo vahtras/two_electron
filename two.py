@@ -29,7 +29,7 @@ def list_buffers(filename="AOTWOINT", label="BASTWOEL"):
         lbuf = (_aofile.reclen-4)/12
 
         buf = np.array(rec.read(lbuf,'d'))
-        ibuf = np.array(rec.read(4*lbuf,'b')).reshape(lbuf, 4)
+        ibuf = np.array(rec.read(4*lbuf,'B')).reshape(lbuf, 4)
         length = rec.read(1,'i')[0]
 
         if length < 0: raise StopIteration

@@ -4,6 +4,7 @@ import subprocess
 import numpy
 from util.full import matrix
 from .. import two
+import mock
 
 class TwoTest(unittest.TestCase):
 
@@ -134,20 +135,49 @@ class TestAcetaldehydeSmall(TestBase):
         self.d = numpy.loadtxt(os.path.join(self.tmpdir, 'dcao')).view(matrix).reshape((62, 62))
         self.f = numpy.loadtxt(os.path.join(self.tmpdir, 'fcao')).view(matrix).reshape((62, 62))
 
+    @unittest.skip('long test')
     def test_number_of_integrals(self):
         self.assertEqual(len(list(two.list_integrals(self.aotwoint))), 972549)
 
+    @unittest.skip('long test')
     def test_dens_fock(self):
         numpy.testing.assert_almost_equal(
             two.fock(self.d, filename=self.aotwoint, f2py=False), 
             self.f
             )
 
+    @unittest.skip('long test')
     def test_dens_fock_f2py(self):
         numpy.testing.assert_almost_equal(
             two.fock(self.d, filename=self.aotwoint, f2py=True), 
             self.f
         )
+
+class TestTransform(unittest.TestCase):
+
+    @mock.patch('two_electron.two.matrix')
+    @mock.patch('two_electron.two.list_integrals')
+    def test_matrix_call(self, mock_list_integrals, mock_matrix):
+	d1=mock.Mock(spec=['shape'])
+	d1.shape=(30,60)
+	mmaa = two.semitransform(d1, d1)
+	mock_matrix.assert_called_with((30, 30, 60, 60))
+	
+
+    @mock.patch('two_electron.two.list_integrals')
+    def test_list_integrals_call(self, mock_list_integrals):
+	d1=mock.Mock(spec=['shape'])
+	d1.shape=(30,60)
+	two.semitransform(d1, d1, file='integral_file')
+	mock_list_integrals.assert_called_once_with('integral_file')
+
+    @mock.patch('two_electron.two.list_integrals')
+    def test_list_integrals_one(self, mock_list_integrals):
+	d1 = matrix((1, 1))
+	d1[0, 0] = 2
+	mock_list_integrals.return_value = [((1, 1, 1, 1), 3.0)]
+	mmaa = two.semitransform(d1, d1, file='integral_file')
+	numpy.testing.assert_allclose([[[[12]]]], mmaa)
 
 if __name__ == "__main__":
     unittest.main()

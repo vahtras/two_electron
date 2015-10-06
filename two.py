@@ -147,7 +147,20 @@ def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
             K[r, p] += g*D[q, s]
             K[s, p] += g*D[q, r]
 
+    print  hfc*J - 0.5*hfx*K
     return hfc*J - 0.5*hfx*K
+
+def semitransform(*args, **kwargs):
+    d1, d2 = args
+    filename = kwargs.get('file', '/tmp/AOTWOINT')
+    m, a = d1.shape
+    mmaa = matrix((m, m, a, a))
+    print mmaa.shape
+    for ig, g in list_integrals(filename):
+	p, q, r, s = ig
+	s, r, q, p = p-1, q-1, r-1, s-1
+	mmaa[:, :, r, s] += d1[:, p].x(d2[:, q])*g
+    return mmaa
 
 if __name__ == "__main__":
 

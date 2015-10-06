@@ -159,108 +159,93 @@ def fockab(Da, Db, component, **kwargs):
 
 
 if __name__ == "__main__":
-    import optparse 
-    parser = optparse.OptionParser()
-    parser.add_option(
-        '-d','--directory', dest='dir', default='/tmp', 
-        help='Directory containing Dalton job files'
-        )
-    parser.add_option(
-        '-f','--fock', dest='fock', default=False, action='store_true', 
-        help='Calculate the [inactive] Fock matrix'
-        )
-    parser.add_option(
-        '-g','--grad', dest='grad', default=1, type=int, 
-        help='Calculate the [inactive] Fock matrix'
-        )
-    parser.add_option(
-        '-l','--list', dest='list', default=False, action='store_true', 
-        help='List integrals on file'
-        )
-    parser.add_option(
-        '-o','--occ', dest='occ', default=None, 
-        help='List integrals on file'
-        )
-    parser.add_option(
-        '-c','--comp', dest='comp', default=None, 
-        help='List integrals on file'
-        )
-    parser.add_option(
-        '-a','--fock-ab', dest='fock_ab', default=False, action='store_true', 
-        help='Calculate the alpha,beta Fock matrices'
-        )
-    parser.add_option(
-        '-J','--hfc', dest='hfc', default=1.0, type=float, 
+
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--directory', default='.', help='Scratch directory')
+    parser.add_argument('-i', '--integral_file',  help='Scratch directory')
+    parser.add_argument('-f', '--fock', action='store_true', 
+        help='Calculate the [inactive] Fock matrix')
+    parser.add_argument('-g', '--grad', type=int, default=1,help='gradient')
+    parser.add_argument('-l','--list', action='store_true', 
+        help='List integrals on file')
+    parser.add_argument('-o','--occ', type=int, nargs='+', help='occ what?')
+    parser.add_argument('-c','--comp', help='comp what?')
+    parser.add_argument('-a','--fock-ab', action='store_true', 
+        help='Calculate the alpha,beta Fock matrices')
+    parser.add_argument('-J','--hfc', default=1.0, type=float, 
         help='Hartree-Fock coulomb factor'
         )
-    parser.add_option(
-        '-K','--hfx', dest='hfx', default=1.0, type=float, 
-        help='Hartree-Fock exchange factor'
-        )
-    parser.add_option(
-        '-S','--spin-density', dest='S', default=1, type=int, 
+    parser.add_argument('-K','--hfx', default=1.0, type=float, 
+        help='Hartree-Fock exchange factor')
+    parser.add_argument('-S','--spin-density', default=1, type=int, 
         help='Choose input density (0,1)'
         )
 
-    opt, arg = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args()
+    print args
 
-    #
-    # Get ao basis dimension from one-integral file
-    #
-    ao2soint = os.path.sep.join([opt.dir, "AO2SOINT"])
+#
+# Get ao basis dimension from one-integral file
+#
+    if args.integral_file:
+        ao2soint = args.integral_file
+    else:
+        ao2soint = os.path.join(args.directory, "AO2SOINT")
 
-
-    if opt.list:
+    if args.list:
         print "List integrals"
-        for c, ig, g in list_integrals(ao2soint, "AO2SOINT"):
+        for c, ig, g in list_integrals(ao2soint):
             print c, ig, g
 
-    if opt.fock:
-        if opt.grad not in  [0, 1]:
+    if args.fock:
+        if args.grad not in  [0, 1]:
             print "Valid opt: 0,1"
             sys.exit(1)
-        if opt.grad:
+        if args.grad:
             print "Get triplet Fock matrix"
         else:
             print "Get singlet Fock matrix"
 
-    if opt.occ:
-        occ = [int(i) for i in opt.occ.split(",")]
-        print occ
+    if args.occ:
+        print args.occ
 
 
-    if opt.fock or opt.fock_ab:
+    if args.fock or args.fock_ab:
 #
 # MO from from ifc
 #
-        SIRIUS_RST = os.path.sep.join([opt.dir, "SIRIUS.RST"])
-        from sirrst import sirrst
-        rst = sirrst(SIRIUS_RST)
+        SIRIUS_RST = os.path.join(args.directory, "SIRIUS.RST")
+        from sirrst.sirrst import SiriusRestart
+        rst = SiriusRestart(SIRIUS_RST)
         cmo = rst.cmo.unblock()
 
-        if opt.occ:
-            na, nb = occ
-        else:
-            na = nb = cmo.shape[1]
-
-        cmoa = cmo[:, :na]
-        cmob = cmo[:, :nb]
-
-        Da = cmoa*cmoa.T
-        Db = cmob*cmob.T
-
-    if opt.fock:
-
-        D_S = Da + opt.S*Db
-        F_Sg = fock(opt.comp, opt.grad, D_S, 
-            filename=ao2soint,  hfc=opt.hfc, hfx=opt.hfx)
-        print D_S, F_Sg
 
 
-    if opt.fock_ab:
+#       if opt.occ:
+#           na, nb = occ
+#       else:
+#           na = nb = cmo.shape[1]
 
-        Fa, Fb = fockab(opt.comp, (Da, Db), ao2soint, hfc=opt.hfc, hfx=opt.hfx)
-        print  "Fa", Fa, "Fb", Fb
+#       cmoa = cmo[:, :na]
+#       cmob = cmo[:, :nb]
+
+#       Da = cmoa*cmoa.T
+#       Db = cmob*cmob.T
+
+#   if opt.fock:
+
+#       D_S = Da + opt.S*Db
+#       F_Sg = fock(opt.comp, opt.grad, D_S, 
+#           filename=ao2soint,  hfc=opt.hfc, hfx=opt.hfx)
+#       print D_S, F_Sg
 
 
-    sys.exit(0)
+#   if opt.fock_ab:
+
+#       Fa, Fb = fockab(opt.comp, (Da, Db), ao2soint, hfc=opt.hfc, hfx=opt.hfx)
+#       print  "Fa", Fa, "Fb", Fb
+
+
+#   sys.exit(0)

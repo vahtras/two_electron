@@ -155,7 +155,6 @@ def semitransform(*args, **kwargs):
     filename = kwargs.get('file', '/tmp/AOTWOINT')
     m, a = d1.shape
     mmaa = matrix((m, m, a, a))
-    print mmaa.shape
     for ig, g in list_integrals(filename):
 	p, q, r, s = ig
 	s, r, q, p = p-1, q-1, r-1, s-1

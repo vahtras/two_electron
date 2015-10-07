@@ -158,7 +158,19 @@ def semitransform(*args, **kwargs):
     for ig, g in list_integrals(filename):
 	p, q, r, s = ig
 	s, r, q, p = p-1, q-1, r-1, s-1
+        if p == q: g *= 0.5
+        if r == s: g *= 0.5
+	if (p, q) == (r, s): g *= 0.5
+
 	mmaa[:, :, r, s] += d1[:, p].x(d2[:, q])*g
+	mmaa[:, :, r, s] += d1[:, q].x(d2[:, p])*g
+	mmaa[:, :, s, r] += d1[:, p].x(d2[:, q])*g
+	mmaa[:, :, s, r] += d1[:, q].x(d2[:, p])*g
+	mmaa[:, :, p, q] += d1[:, r].x(d2[:, s])*g
+	mmaa[:, :, q, p] += d1[:, r].x(d2[:, s])*g
+	mmaa[:, :, p, q] += d1[:, s].x(d2[:, r])*g
+	mmaa[:, :, q, p] += d1[:, s].x(d2[:, r])*g
+
     return mmaa
 
 if __name__ == "__main__":

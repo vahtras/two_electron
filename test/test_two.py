@@ -179,6 +179,21 @@ class TestTransform(unittest.TestCase):
 	mmaa = two.semitransform(d1, d1, file='integral_file')
 	numpy.testing.assert_allclose([[[[12]]]], mmaa)
 
+    @mock.patch('two_electron.two.list_integrals')
+    def test_list_integrals_two(self, mock_list_integrals):
+	d1 = matrix((1, 2))
+	d1[0, 0] = d1[0, 1] = 1
+	mock_list_integrals.return_value = [
+	    ((1, 1, 1, 1), 0.0),
+	    ((2, 1, 1, 1), 1.0),
+	    ((2, 1, 2, 1), 2.0),
+	    ((2, 2, 1, 1), 2.0),
+	    ((2, 2, 2, 1), 3.0),
+	    ((2, 2, 2, 2), 4.0)
+	    ]
+	mmaa = two.semitransform(d1, d1, file='integral_file')
+	numpy.testing.assert_allclose([[[[4, 8], [8, 12]]]], mmaa)
+
 if __name__ == "__main__":
     unittest.main()
 

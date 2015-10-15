@@ -147,7 +147,6 @@ def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
             K[r, p] += g*D[q, s]
             K[s, p] += g*D[q, r]
 
-    print  hfc*J - 0.5*hfx*K
     return hfc*J - 0.5*hfx*K
 
 def semitransform(*args, **kwargs):

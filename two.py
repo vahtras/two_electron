@@ -5,6 +5,90 @@ import numpy as np
 from util.unformatted import FortranBinary as FB
 from util.full import matrix
 
+class TwoInt(object):
+    def __init__(self, aotwoint):
+        self.aotwoint = aotwoint
+
+    def info(self):
+        """Extract info block BASINFO on AOTWOINT"""
+        _aotwoint = FB(self.aotwoint)
+        _aotwoint.find("BASINFO")
+        rec = next(_aotwoint)
+        fileinfo = rec.read(12,'i')
+        retinfo = {
+            "nsym":fileinfo[0],
+            "nbas":fileinfo[1:9],
+            "lbuf":fileinfo[9],
+            "nibuf":fileinfo[10],
+            "nbits":fileinfo[11]
+            }
+        return retinfo
+
+    def fock(self, D, hfc=1, hfx=1, f2py=True):
+        """Routine for building alpha and beta fock matrix by reading AOTWOINT"""
+
+        if f2py is True:
+            try:
+                import sirfck
+            except(ImportError):
+                f2py = False
+                print "Warning: non-existent sirfck.so wanted - reverting to python"
+
+        J = matrix(D.shape)
+        K = matrix(D.shape)
+
+        if f2py:
+            for buf, ibuf in self.list_buffers():
+                J, K = sirfck.fck(
+                    J, K,  D, D, buf, ibuf.T
+                    )
+        else:
+            for ig, g in self.list_integrals():
+                p, q, r, s = ig
+                s, r, q, p = (p-1, q-1, r-1, s-1)
+                if ( p == q ): g *= .5
+                if ( r == s ): g *= .5
+                if ( p == r and q == s ): g *= .5
+
+                Jadd = g * (D[r, s] + D[s, r])
+                J[p, q] += Jadd
+                J[q, p] += Jadd
+                Jadd = g * (D[p, q] + D[q, p])
+                J[r, s] += Jadd
+                J[s, r] += Jadd
+                K[p, s] += g*D[r, q]
+                K[p, r] += g*D[s, q]
+                K[q, s] += g*D[r, p]
+                K[q, r] += g*D[s, p]
+                K[r, q] += g*D[p, s]
+                K[s, q] += g*D[p, r]
+                K[r, p] += g*D[q, s]
+                K[s, p] += g*D[q, r]
+
+        return hfc*J - 0.5*hfx*K
+
+    def list_integrals(self, *args, **kwargs):
+        """ List two-electron spin-orbit integrals in file """
+
+        for buf, ibuf in self.list_buffers(*args, **kwargs):
+            for g, ig in zip(buf, ibuf):
+                yield ig, g
+
+    def list_buffers(self, label="BASTWOEL"):
+        """ Return integral buffers in AOTWOINT"""
+        _aofile = FB(self.aotwoint, label=label)
+
+        for rec in _aofile:
+            lbuf = (_aofile.reclen-4)/12
+
+            buf = np.array(rec.read(lbuf,'d'))
+            ibuf = np.array(rec.read(4*lbuf,'B')).reshape(lbuf, 4)
+            length = rec.read(1,'i')[0]
+
+            if length < 0: raise StopIteration
+            yield buf[:length], ibuf[:length]
+
+
 def info(filename="AOTWOINT"):
     """Extract info block BASINFO on AOTWOINT"""
     _aotwoint = FB(filename)
@@ -155,20 +239,20 @@ def semitransform(*args, **kwargs):
     m, a = d1.shape
     mmaa = matrix((m, m, a, a))
     for ig, g in list_integrals(filename):
-	p, q, r, s = ig
-	s, r, q, p = p-1, q-1, r-1, s-1
+        p, q, r, s = ig
+        s, r, q, p = p-1, q-1, r-1, s-1
         if p == q: g *= 0.5
         if r == s: g *= 0.5
-	if (p, q) == (r, s): g *= 0.5
+        if (p, q) == (r, s): g *= 0.5
 
-	mmaa[:, :, r, s] += d1[:, p].x(d2[:, q])*g
-	mmaa[:, :, r, s] += d1[:, q].x(d2[:, p])*g
-	mmaa[:, :, s, r] += d1[:, p].x(d2[:, q])*g
-	mmaa[:, :, s, r] += d1[:, q].x(d2[:, p])*g
-	mmaa[:, :, p, q] += d1[:, r].x(d2[:, s])*g
-	mmaa[:, :, q, p] += d1[:, r].x(d2[:, s])*g
-	mmaa[:, :, p, q] += d1[:, s].x(d2[:, r])*g
-	mmaa[:, :, q, p] += d1[:, s].x(d2[:, r])*g
+        mmaa[:, :, r, s] += d1[:, p].x(d2[:, q])*g
+        mmaa[:, :, r, s] += d1[:, q].x(d2[:, p])*g
+        mmaa[:, :, s, r] += d1[:, p].x(d2[:, q])*g
+        mmaa[:, :, s, r] += d1[:, q].x(d2[:, p])*g
+        mmaa[:, :, p, q] += d1[:, r].x(d2[:, s])*g
+        mmaa[:, :, q, p] += d1[:, r].x(d2[:, s])*g
+        mmaa[:, :, p, q] += d1[:, s].x(d2[:, r])*g
+        mmaa[:, :, q, p] += d1[:, s].x(d2[:, r])*g
 
     return mmaa
 

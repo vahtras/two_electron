@@ -28,6 +28,30 @@ class TwoTest(unittest.TestCase):
         self.assertAlmostEqual(g, 4.78506540471)
         numpy.testing.assert_equal(ig, [1,1,1,1])
 
+class TwoIntTest(unittest.TestCase):
+
+    def setUp(self):
+        n, e = os.path.splitext(__file__)
+        suppdir = n + ".d"
+        self.twoint = two.TwoInt(os.path.join(suppdir, "AOTWOINT"))
+        self.info = self.twoint.info()
+
+    def test_basinfo_nsym(self):
+        self.assertEqual(self.info["nsym"], 1)
+
+    def test_basinfo_nbas(self):
+        numpy.testing.assert_equal(self.info["nbas"], [7,0,0,0,0,0,0,0])
+
+    def test_basinfo_lbuf(self):
+        self.assertEqual(self.info["lbuf"], 600)
+
+    def test_basinfo_nibuf(self):
+        self.assertEqual(self.info["nibuf"], 1)
+
+    def test_basinfo_nbits(self):
+        self.assertEqual(self.info["nbits"], 8)
+    
+
 
 class TestBase(unittest.TestCase):
 
@@ -61,7 +85,6 @@ class TestH2O(TestBase):
         self.f = numpy.loadtxt(os.path.join(self.tmpdir, 'fcao')).view(matrix).reshape((24, 24))
 
     def test_dens_fock(self):
-	print self.d
         numpy.testing.assert_almost_equal(
             two.fock(self.d, filename=self.aotwoint, f2py=False), 
             self.f
@@ -73,8 +96,29 @@ class TestH2O(TestBase):
             self.f
         )
 
-class TestAcetaldehyde(TestBase):
+class TestTwoIntH2o(unittest.TestCase):
 
+    def setUp(self):
+        root, ext = n, e = os.path.splitext(__file__)
+        self.tmpdir = os.path.join(root + ".d", "H2O")
+        self.aotwoint = two.TwoInt(os.path.join(self.tmpdir, "hf_H2O_ccpVDZ.AOTWOINT"))
+        self.d = numpy.loadtxt(os.path.join(self.tmpdir, 'dcao')).view(matrix).reshape((24, 24))
+        self.f = numpy.loadtxt(os.path.join(self.tmpdir, 'fcao')).view(matrix).reshape((24, 24))
+
+    def test_dens_fock(self):
+        numpy.testing.assert_almost_equal(
+            self.aotwoint.fock(self.d, f2py=False), 
+            self.f
+            )
+
+    def test_dens_fock_f2py(self):
+        numpy.testing.assert_almost_equal(
+            self.aotwoint.fock(self.d, f2py=True), 
+            self.f
+        )
+        
+
+class TestAcetaldehyde(TestBase):
 
     @classmethod
     def setUpClass(cls):

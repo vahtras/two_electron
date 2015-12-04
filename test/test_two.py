@@ -2,7 +2,7 @@ import  unittest
 import os
 import subprocess
 import numpy
-from util.full import matrix
+from ..util.full import matrix
 from .. import two
 import mock
 
@@ -51,14 +51,6 @@ class TwoIntTest(unittest.TestCase):
     def test_basinfo_nbits(self):
         self.assertEqual(self.info["nbits"], 8)
     
-    @mock.patch('two_electron.two.TwoInt.list_buffers')
-    def test_list(self, mock_buffers):
-        mock_buffers.return_value = ([], [])
-        d = numpy.ones((7, 7))
-        f = self.twoint.fock(d, hfx=0)
-        numpy.testing.assert_allclose(f, d)
-
-
 class TestBase(unittest.TestCase):
 
     @classmethod
@@ -202,47 +194,6 @@ class TestAcetaldehydeSmall(TestBase):
             two.fock(self.d, filename=self.aotwoint, f2py=True), 
             self.f
         )
-
-class TestTransform(unittest.TestCase):
-
-    @mock.patch('two_electron.two.matrix')
-    @mock.patch('two_electron.two.list_integrals')
-    def test_matrix_call(self, mock_list_integrals, mock_matrix):
-	d1=mock.Mock(spec=['shape'])
-	d1.shape=(30,60)
-	mmaa = two.semitransform(d1, d1)
-	mock_matrix.assert_called_with((30, 30, 60, 60))
-	
-
-    @mock.patch('two_electron.two.list_integrals')
-    def test_list_integrals_call(self, mock_list_integrals):
-	d1=mock.Mock(spec=['shape'])
-	d1.shape=(30,60)
-	two.semitransform(d1, d1, file='integral_file')
-	mock_list_integrals.assert_called_once_with('integral_file')
-
-    @mock.patch('two_electron.two.list_integrals')
-    def test_list_integrals_one(self, mock_list_integrals):
-	d1 = matrix((1, 1))
-	d1[0, 0] = 2
-	mock_list_integrals.return_value = [((1, 1, 1, 1), 3.0)]
-	mmaa = two.semitransform(d1, d1, file='integral_file')
-	numpy.testing.assert_allclose([[[[12]]]], mmaa)
-
-    @mock.patch('two_electron.two.list_integrals')
-    def test_list_integrals_two(self, mock_list_integrals):
-	d1 = matrix((1, 2))
-	d1[0, 0] = d1[0, 1] = 1
-	mock_list_integrals.return_value = [
-	    ((1, 1, 1, 1), 0.0),
-	    ((2, 1, 1, 1), 1.0),
-	    ((2, 1, 2, 1), 2.0),
-	    ((2, 2, 1, 1), 2.0),
-	    ((2, 2, 2, 1), 3.0),
-	    ((2, 2, 2, 2), 4.0)
-	    ]
-	mmaa = two.semitransform(d1, d1, file='integral_file')
-	numpy.testing.assert_allclose([[[[4, 8], [8, 12]]]], mmaa)
 
 if __name__ == "__main__":
     unittest.main()

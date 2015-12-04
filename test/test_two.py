@@ -51,6 +51,12 @@ class TwoIntTest(unittest.TestCase):
     def test_basinfo_nbits(self):
         self.assertEqual(self.info["nbits"], 8)
     
+    @mock.patch('two_electron.two.TwoInt.list_buffers')
+    def test_list(self, mock_buffers):
+        mock_buffers.return_value = ([], [])
+        d = numpy.ones((7, 7))
+        f = self.twoint.fock(d, hfx=0)
+        numpy.testing.assert_allclose(f, d)
 
 
 class TestBase(unittest.TestCase):

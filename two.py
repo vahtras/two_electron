@@ -234,7 +234,7 @@ def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
     return hfc*J - 0.5*hfx*K
 
 def vb_transform(dens, delta, **kwargs):
-    filename = kwargs.get('file', '/tmp/AOTWOINT')
+    filename = kwargs.get('filename', '/tmp/AOTWOINT')
     a, m = dens[0].shape
     H_uvmn = matrix((a, a, m, m))
     for ig, g in list_integrals(filename):
@@ -267,7 +267,7 @@ def vb_transform(dens, delta, **kwargs):
     return H_uvmn.transpose(0, 2, 1, 3)
 
 def vb_transform2(Dma, Dam, Delta1, Delta2, **kwargs):
-    filename = kwargs.get('file', '/tmp/AOTWOINT')
+    filename = kwargs.get('filename', '/tmp/AOTWOINT')
     H_umvn = matrix(Dam[0].shape + Dam[0].shape)
     for ig, g in list_integrals(filename):
         p, q, r, s = ig

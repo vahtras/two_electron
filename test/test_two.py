@@ -58,6 +58,7 @@ class TestBase(unittest.TestCase):
         root, ext = n, e = os.path.splitext(__file__)
         cls.base_dir = root + ".d"
         
+@unittest.skip('generate integral files to run')
 class TestH2O(TestBase):
 
     @classmethod
@@ -74,7 +75,6 @@ class TestH2O(TestBase):
             args = ['dalton', '-get', 'AOTWOINT', cls.dal, cls.mol]
             #subprocess.call(args)
 
-    @unittest.skip('generate integral files to run')
     def test_number_of_integrals(self):
         self.assertEqual(len(list(two.list_integrals(self.aotwoint))), 11412)
 
@@ -82,43 +82,18 @@ class TestH2O(TestBase):
         self.d = numpy.loadtxt(os.path.join(self.tmpdir, 'dcao')).view(matrix).reshape((24, 24))
         self.f = numpy.loadtxt(os.path.join(self.tmpdir, 'fcao')).view(matrix).reshape((24, 24))
 
-    @unittest.skip('generate integral files to run')
     def test_dens_fock(self):
         numpy.testing.assert_almost_equal(
             two.fock(self.d, filename=self.aotwoint, f2py=False), 
             self.f
             )
 
-    @unittest.skip('generate integral files to run')
     def test_dens_fock_f2py(self):
         numpy.testing.assert_almost_equal(
             two.fock(self.d, filename=self.aotwoint, f2py=True), 
             self.f
         )
 
-class TestTwoIntH2o(unittest.TestCase):
-
-    def setUp(self):
-        return
-        root, ext = n, e = os.path.splitext(__file__)
-        self.tmpdir = os.path.join(root + ".d", "H2O")
-        self.aotwoint = two.TwoInt(os.path.join(self.tmpdir, "hf_H2O_ccpVDZ.AOTWOINT"))
-        self.d = numpy.loadtxt(os.path.join(self.tmpdir, 'dcao')).view(matrix).reshape((24, 24))
-        self.f = numpy.loadtxt(os.path.join(self.tmpdir, 'fcao')).view(matrix).reshape((24, 24))
-
-    @unittest.skip('generate integral files to run')
-    def test_dens_fock(self):
-        numpy.testing.assert_almost_equal(
-            self.aotwoint.fock(self.d, f2py=False), 
-            self.f
-            )
-
-    @unittest.skip('generate integral files to run')
-    def test_dens_fock_f2py(self):
-        numpy.testing.assert_almost_equal(
-            self.aotwoint.fock(self.d, f2py=True), 
-            self.f
-        )
 
 
 if __name__ == "__main__":

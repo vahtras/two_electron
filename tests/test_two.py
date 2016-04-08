@@ -2,7 +2,7 @@ import  unittest
 import os
 import subprocess
 import numpy
-from ..util.full import matrix
+from util.full import matrix
 from .. import two
 import mock
 

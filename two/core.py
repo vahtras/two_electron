@@ -2,8 +2,8 @@
 """Module for getting stuff from Dalton two-electron integral file AOTWOINT"""
 
 import numpy as np
-from ..util.unformatted import FortranBinary as FB
-from ..util.full import matrix
+from util.unformatted import FortranBinary as FB
+from util.full import matrix
 
 class TwoInt(object):
     def __init__(self, aotwoint):
@@ -107,7 +107,8 @@ def info(filename="AOTWOINT"):
 
 def list_buffers(filename="AOTWOINT", label="BASTWOEL"):
     """ Return integral buffers in AOTWOINT"""
-    _aofile = FB(filename, label=label)
+    _aofile = FB(filename)
+    _aofile.find(label)
 
     for rec in _aofile:
         lbuf = (_aofile.reclen-4)/12

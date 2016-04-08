@@ -12,8 +12,8 @@
 
 import os, sys
 import numpy as np
-from ..util.unformatted import FortranBinary as fb
-from ..util.full import matrix
+from util.unformatted import FortranBinary as fb
+from util.full import matrix
 from . import core as two
 
 def list_integrals(*args, **kwargs):

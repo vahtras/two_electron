@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from ..util.full import matrix, init
+from util.full import matrix, init
 from ..two import fockab, fock
 
 def assert_(this, ref):

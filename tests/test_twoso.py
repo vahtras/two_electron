@@ -1,7 +1,7 @@
 import unittest
 import os
 import numpy as np
-from ..util.full import init
+from util.full import init
 from ..two import twoso
 
 class TestSpinOrbit(unittest.TestCase):

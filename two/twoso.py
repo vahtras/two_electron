@@ -27,7 +27,7 @@ def list_integrals(*args, **kwargs):
                 yield comp, ig, g
 
 
-def fock(D, component, S_g=1,  **kwargs):
+def fock(D, component, **kwargs):
     """ Generate two-electron spin-orbit Fock matrix 
         from integral file AO2SOINT
    """
@@ -36,17 +36,8 @@ def fock(D, component, S_g=1,  **kwargs):
     hfx = kwargs.get('hfx', 1.0)
 
 #
-# These factors for the coulomb part (1 or 2)  are derived from the spin 
-# combination  l21 . (s2 + 2s1) which are reversed for singlet and triplet 
-# gradients
-# The exchange parts are identical
-#
-    if S_g:
-        left = 1
-        right = 2
-    else:
-        left = 2
-        right = 1
+    left = 1
+    right = 2
 
     nbast, _ = D.shape
     J = matrix((nbast, nbast))
@@ -67,10 +58,10 @@ def fock(D, component, S_g=1,  **kwargs):
                 if (p == q): g *= 0.5
                 x = 1.5 * g
 
-                JL[r, s] += left * g * (D[p, q] + D[q, p])
-                JL[s, r] -= left * g * (D[p, q] + D[q, p])
-                JR[p, q] += right* g * (D[r, s] - D[s, r])
-                JR[q, p] += right* g * (D[r, s] - D[s, r])
+                JL[r, s] += g*(D[p, q] + D[q, p])
+                JL[s, r] -= g*(D[p, q] + D[q, p])
+                JR[p, q] += 2*g*(D[r, s] - D[s, r])
+                JR[q, p] += 2*g*(D[r, s] - D[s, r])
 
                 K[p, s] -= x * D[r, q]
                 K[s, p] += x * D[q, r]
@@ -90,7 +81,7 @@ def fockab(Da, Db, component, **kwargs):
         integral file AO2SOINT
         Input: component 'x', 'y', or 'z'
                Density matrices, tuple (Da, Db)
-               AO intergral file, FortranBinary object, positioned
+               AO integral file, FortranBinary object, positioned
         Output Fock matrics, tuple(Fa, Fb)
     """
 
@@ -158,94 +149,27 @@ def fockab(Da, Db, component, **kwargs):
     return (Fa, Fb)
 
 
-if __name__ == "__main__":
 
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--directory', default='.', help='Scratch directory')
-    parser.add_argument('-i', '--integral_file',  help='Scratch directory')
-    parser.add_argument('-f', '--fock', action='store_true', 
-        help='Calculate the [inactive] Fock matrix')
-    parser.add_argument('-g', '--grad', type=int, default=1,help='gradient')
+    parser.add_argument('-i', '--integral_file',  default='AO2SOINT', help='Integral file')
     parser.add_argument('-l','--list', action='store_true', 
         help='List integrals on file')
-    parser.add_argument('-o','--occ', type=int, nargs='+', help='occ what?')
-    parser.add_argument('-c','--comp', help='comp what?')
-    parser.add_argument('-a','--fock-ab', action='store_true', 
-        help='Calculate the alpha,beta Fock matrices')
-    parser.add_argument('-J','--hfc', default=1.0, type=float, 
-        help='Hartree-Fock coulomb factor'
-        )
-    parser.add_argument('-K','--hfx', default=1.0, type=float, 
-        help='Hartree-Fock exchange factor')
-    parser.add_argument('-S','--spin-density', default=1, type=int, 
-        help='Choose input density (0,1)'
-        )
 
     args = parser.parse_args()
-    print(args)
 
 #
 # Get ao basis dimension from one-integral file
 #
-    if args.integral_file:
-        ao2soint = args.integral_file
-    else:
-        ao2soint = os.path.join(args.directory, "AO2SOINT")
+    ao2soint = os.path.join(args.directory, args.integral_file)
 
     if args.list:
         print("List integrals")
         for c, ig, g in list_integrals(ao2soint):
             print(c, ig, g)
 
-    if args.fock:
-        if args.grad not in  [0, 1]:
-            print("Valid opt: 0,1")
-            sys.exit(1)
-        if args.grad:
-            print("Get triplet Fock matrix")
-        else:
-            print("Get singlet Fock matrix")
-
-    if args.occ:
-        print(args.occ)
-
-
-    if args.fock or args.fock_ab:
-#
-# MO from from ifc
-#
-        SIRIUS_RST = os.path.join(args.directory, "SIRIUS.RST")
-        from sirrst.sirrst import SiriusRestart
-        rst = SiriusRestart(SIRIUS_RST)
-        cmo = rst.cmo.unblock()
-
-
-
-#       if opt.occ:
-#           na, nb = occ
-#       else:
-#           na = nb = cmo.shape[1]
-
-#       cmoa = cmo[:, :na]
-#       cmob = cmo[:, :nb]
-
-#       Da = cmoa*cmoa.T
-#       Db = cmob*cmob.T
-
-#   if opt.fock:
-
-#       D_S = Da + opt.S*Db
-#       F_Sg = fock(opt.comp, opt.grad, D_S, 
-#           filename=ao2soint,  hfc=opt.hfc, hfx=opt.hfx)
-#       print D_S, F_Sg
-
-
-#   if opt.fock_ab:
-
-#       Fa, Fb = fockab(opt.comp, (Da, Db), ao2soint, hfc=opt.hfc, hfx=opt.hfx)
-#       print  "Fa", Fa, "Fb", Fb
-
-
-#   sys.exit(0)
+if __name__ == "__main__":#pragma: no cover
+    sys.exit(main())

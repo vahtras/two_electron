@@ -5,7 +5,6 @@ from . import two
 from two import fockab, fock
 
 def assert_(this, ref):
-    print(this, ref)
     assert np.allclose(this, ref)
 
 def setup():
@@ -38,9 +37,6 @@ def test_fab_p():
     da[1, 1] = 1 
     db[0, 0] = 1 
     fa, fb = fockab((da, db), filename = os.path.join(suppdir, "AOTWOINT"), f2py=False)
-
-
-
     assert_(fa, faref)
     assert_(fb, fbref)
 
@@ -51,8 +47,6 @@ def test_fab_f():
     da[1, 1] = 1 
     db[0, 0] = 1 
     fa, fb = fockab((da, db), filename = os.path.join(suppdir, "AOTWOINT"), f2py=True)
-
-
     assert_(fa, faref)
     assert_(fb, fbref)
 

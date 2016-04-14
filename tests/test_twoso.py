@@ -1,4 +1,6 @@
 import unittest
+import mock
+import sys
 import os
 import numpy as np
 from util.full import init
@@ -49,6 +51,14 @@ class TestSpinOrbit(unittest.TestCase):
         fa, fb  = twoso.fockab(da, db, 'z' , filename=self.ao2soint)
         fc = 0.5*(fa - fb)
         np.testing.assert_almost_equal(fc, self.fcref)
+
+    @mock.patch('two.twoso.list_integrals')
+    def test_arg_int(self, mock_list):
+        print(sys.argv)
+        sys.argv[1:] = ['-d', '/dev/null', '-l']
+        mock_list.return_value=[('x', (0,0,0,0), 3.14)]
+        twoso.main()
+        mock_list.assert_called_once_with('/dev/null/AO2SOINT')
 
 if __name__ == "__main__":
     unittest.main()

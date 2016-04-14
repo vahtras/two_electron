@@ -5,7 +5,7 @@ from . import two
 from two import fockab, fock
 
 def assert_(this, ref):
-    print this, ref
+    print(this, ref)
     assert np.allclose(this, ref)
 
 def setup():

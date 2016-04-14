@@ -184,7 +184,7 @@ if __name__ == "__main__":
         )
 
     args = parser.parse_args()
-    print args
+    print(args)
 
 #
 # Get ao basis dimension from one-integral file
@@ -195,21 +195,21 @@ if __name__ == "__main__":
         ao2soint = os.path.join(args.directory, "AO2SOINT")
 
     if args.list:
-        print "List integrals"
+        print("List integrals")
         for c, ig, g in list_integrals(ao2soint):
-            print c, ig, g
+            print(c, ig, g)
 
     if args.fock:
         if args.grad not in  [0, 1]:
-            print "Valid opt: 0,1"
+            print("Valid opt: 0,1")
             sys.exit(1)
         if args.grad:
-            print "Get triplet Fock matrix"
+            print("Get triplet Fock matrix")
         else:
-            print "Get singlet Fock matrix"
+            print("Get singlet Fock matrix")
 
     if args.occ:
-        print args.occ
+        print(args.occ)
 
 
     if args.fock or args.fock_ab:

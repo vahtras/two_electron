@@ -3,4 +3,4 @@ default:
 install:
 	python setup.py install
 test:
-	python -m nose
+	python -m pytest --cov=two --cov-report=html tests 

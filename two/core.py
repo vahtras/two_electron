@@ -32,7 +32,7 @@ class TwoInt(object):
                 import sirfck
             except(ImportError):
                 f2py = False
-                print "Warning: non-existent sirfck.so wanted - reverting to python"
+                print("Warning: non-existent sirfck.so wanted - reverting to python")
 
         J = matrix(D.shape)
         K = matrix(D.shape)
@@ -79,7 +79,7 @@ class TwoInt(object):
         _aofile = FB(self.aotwoint, label=label)
 
         for rec in _aofile:
-            lbuf = (_aofile.reclen-4)/12
+            lbuf = (_aofile.reclen-4) // 12
 
             buf = np.array(rec.read(lbuf,'d'))
             ibuf = np.array(rec.read(4*lbuf,'B')).reshape(lbuf, 4)
@@ -111,7 +111,7 @@ def list_buffers(filename="AOTWOINT", label="BASTWOEL"):
     _aofile.find(label)
 
     for rec in _aofile:
-        lbuf = (_aofile.reclen-4)/12
+        lbuf = (_aofile.reclen-4) // 12
 
         buf = np.array(rec.read(lbuf,'d'))
         ibuf = np.array(rec.read(4*lbuf,'B')).reshape(lbuf, 4)
@@ -144,7 +144,7 @@ def fockab(Dab, **kwargs):
             import sirfck
         except(ImportError):
             f2py = False
-            print "Warning: non-existent sirfck.so wanted - reverting to python"
+            print("Warning: non-existent sirfck.so wanted - reverting to python")
 
 
     J = matrix(D.shape)
@@ -199,7 +199,7 @@ def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
             import sirfck
         except(ImportError):
             f2py = False
-            print "Warning: non-existent sirfck.so wanted - reverting to python"
+            print("Warning: non-existent sirfck.so wanted - reverting to python")
 
     J = matrix(D.shape)
     K = matrix(D.shape)
@@ -317,6 +317,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.list:
-        print "List integrals"
+        print("List integrals")
         for ig, g in list_integrals(args.file):
-            print ig, g
+            print(ig, g)

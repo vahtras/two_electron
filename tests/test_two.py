@@ -58,7 +58,7 @@ class TestBase(unittest.TestCase):
         root, ext = n, e = os.path.splitext(__file__)
         cls.base_dir = root + ".d"
         
-@unittest.skip('generate integral files to run')
+#@unittest.skip('generate integral files to run')
 class TestH2O(TestBase):
 
     @classmethod

@@ -22,6 +22,6 @@ install:
   - pip install pep8 python-coveralls
   - pip install -r requirements.txt
 script:
-  - nosetests --with-coverage --cover-package .
+  - nosetests --with-coverage --cover-package tests
 after_success:
   - coveralls

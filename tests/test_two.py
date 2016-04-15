@@ -1,5 +1,6 @@
 import  unittest
 import os
+import sys
 import subprocess
 import numpy
 from util.full import matrix
@@ -28,28 +29,6 @@ class TwoTest(unittest.TestCase):
         self.assertAlmostEqual(g, 4.78506540471)
         numpy.testing.assert_equal(ig, [1,1,1,1])
 
-class TwoIntTest(unittest.TestCase):
-
-    def setUp(self):
-        n, e = os.path.splitext(__file__)
-        suppdir = n + ".d"
-        self.twoint = two.TwoInt(os.path.join(suppdir, "AOTWOINT"))
-        self.info = self.twoint.info()
-
-    def test_basinfo_nsym(self):
-        self.assertEqual(self.info["nsym"], 1)
-
-    def test_basinfo_nbas(self):
-        numpy.testing.assert_equal(self.info["nbas"], [7,0,0,0,0,0,0,0])
-
-    def test_basinfo_lbuf(self):
-        self.assertEqual(self.info["lbuf"], 600)
-
-    def test_basinfo_nibuf(self):
-        self.assertEqual(self.info["nibuf"], 1)
-
-    def test_basinfo_nbits(self):
-        self.assertEqual(self.info["nbits"], 8)
     
 class TestBase(unittest.TestCase):
 
@@ -94,6 +73,13 @@ class TestH2O(TestBase):
             self.f
         )
 
+    @mock.patch('two.core.list_integrals')
+    def test_arg_int(self, mock_list):
+        print(sys.argv)
+        sys.argv[1:] = ['--file', '/dev/null/AOTWOINT', '--list']
+        mock_list.return_value=[((0,0,0,0), 3.14)]
+        two.main()
+        mock_list.assert_called_once_with('/dev/null/AOTWOINT')
 
 
 if __name__ == "__main__":

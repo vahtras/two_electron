@@ -86,11 +86,25 @@ class TestSpinOrbitClb(TestSpinOrbitCl):
         nish = [3, 1, 1, 0, 2, 0, 0, 0]
         nash = [0, 1, 1, 0, 0, 0, 0, 0]
         self.di = 2*self.get_dens(nish, self.iorb)
+        self.dv = self.get_dens(
+            nash,
+            self.iorb + nish,
+            nocc=[0, 1, 2, 0, 0, 0, 0, 0]
+            )
+
+    def test_internal_densities(self):
+        np.testing.assert_allclose(self.da+self.db, self.di+self.dv)
 
     def test_fc(self):
         fc = twoso.fock(self.di, 'z' , filename=self.ao2soint)
         fcmo = self.cmo.T*fc*self.cmo
         np.testing.assert_almost_equal(fcmo[10, 14], -21.29974013)
+
+    def test_fab(self):
+        fa, fb = twoso.fockab(self.da, self.db, 'z', filename=self.ao2soint)
+        fc = twoso.fock(self.di, 'z', filename=self.ao2soint)
+        fv = twoso.fock(self.dv, 'z', filename=self.ao2soint)
+        np.testing.assert_almost_equal(0.5*(fa - fb), fc + fv)
 
 
 if __name__ == "__main__":

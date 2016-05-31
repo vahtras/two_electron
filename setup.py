@@ -12,6 +12,6 @@ ext = Extension(
 )
 
 setup(
-    name='two',
+    name='two_electron',
     ext_modules=[ext]
 )

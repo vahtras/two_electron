@@ -71,7 +71,6 @@ class TestSpinOrbitCla(TestSpinOrbitCl):
         fcmo = self.cmo.T*fc*self.cmo
         np.testing.assert_almost_equal(fcmo[10, 14], -20.80725730)
 
-    @unittest.skip('wait')
     def test_fab(self):
         fa, fb = twoso.fockab(self.da, self.db, 'z', filename=self.ao2soint)
         fc = twoso.fock(self.di, 'z', filename=self.ao2soint)

@@ -12,7 +12,7 @@
 
 import os, sys
 import numpy as np
-from util.unformatted import FortranBinary as fb
+from fortran_binary import FortranBinary as fb
 from util.full import matrix
 from . import core as two
 

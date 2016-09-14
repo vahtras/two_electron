@@ -2,7 +2,7 @@
 """Module for getting stuff from Dalton two-electron integral file AOTWOINT"""
 
 import numpy as np
-from util.unformatted import FortranBinary as FB
+from fortran_binary import FortranBinary as FB
 from util.full import matrix
 
 

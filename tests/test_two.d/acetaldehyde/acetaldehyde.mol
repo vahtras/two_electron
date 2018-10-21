@@ -2,7 +2,7 @@ BASIS
 cc-pVTZ
 Generated from acetaldehyde.zmat by molconvert
 ====================================
-Atomtypes=3 Units=Angtrom
+Atomtypes=3 Units=Angtrom NoSymmetry
 Charge=1.0 Atoms=4
 H   1.757032  -0.950283   0.000000
 H   1.423886   2.125080   0.000000

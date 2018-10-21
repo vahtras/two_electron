@@ -34,7 +34,7 @@ def list_buffers(filename="AOTWOINT", label="BASTWOEL"):
         ibuf = np.array(rec.read(4*lbuf,'B')).reshape(lbuf, 4)
         length = rec.read(1,'i')[0]
 
-        if length < 0: raise StopIteration
+        if length < 0: return
         yield buf[:length], ibuf[:length]
 
 def list_integrals(*args, **kwargs):

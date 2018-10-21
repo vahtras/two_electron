@@ -5,7 +5,10 @@ import subprocess
 import numpy
 from util.full import matrix
 from . import two
-import mock
+try:
+    import mock
+except ImportError:
+    import unittest.mock as mock
 
 class TwoTest(unittest.TestCase):
 

@@ -28,7 +28,7 @@ def list_buffers(filename="AOTWOINT", label="BASTWOEL"):
     _aofile.find(label)
 
     for rec in _aofile:
-        lbuf = (_aofile.reclen-4) // 12
+        lbuf = (len(rec)-4) // 12
 
         buf = np.array(rec.read(lbuf,'d'))
         ibuf = np.array(rec.read(4*lbuf,'B')).reshape(lbuf, 4)

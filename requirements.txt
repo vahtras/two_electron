@@ -3,4 +3,4 @@
 -e .
 
 blocked-matrix-utils==1.0.0
-fortran-binary==1.0
+fortran-binary==1.0.1

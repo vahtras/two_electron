@@ -1,11 +1,12 @@
 C
-      SUBROUTINE FCKAB(J,KA,KB,DA,DB,BUF,IBUF,N,LENGTH)
+      SUBROUTINE FCKAB(J,KA,KB,DA,DB,BUF,IBUF,NB,ND,LENGTH)
       IMPLICIT NONE
 CF2PY INTENT(IN,OUT) J,KA,KB
 CF2PY INTENT(IN) DA,DB,BUF,IBUF
-      INTEGER N,IBUF,LENGTH
+      INTEGER NB,ND,IBUF,LENGTH
       DOUBLE PRECISION J,KA,KB,DA,DB,BUF
-      DIMENSION J(N,N),KA(N,N),KB(N,N),DA(N,N),DB(N,N),
+      DIMENSION J(NB,NB,ND), KA(NB,NB,ND), KB(NB,NB,ND),
+     & DA(NB,NB,ND), DB(NB,NB,ND),
      & BUF(LENGTH),IBUF(4,LENGTH)
 C
 C based on FCKD03  - input alpha-beta Fock matrices OV
@@ -16,43 +17,45 @@ C DFT modifications T. Helgaker
 C
 C FILE: priunit.h
       DOUBLE PRECISION GINT,FADD
-      INTEGER P, Q, R, S, INT
+      INTEGER P, Q, R, S, INTEGR, I
 C
 C NOTE: Reals and logicals should appear at the end.
 C
-      DO 100 INT = 1, LENGTH
-         P = IBUF(1,INT)
-         Q = IBUF(2,INT)
-         R = IBUF(3,INT)
-         S = IBUF(4,INT)
-         GINT = BUF(INT)
+      DO 100 INTEGR = 1, LENGTH
+         P = IBUF(1,INTEGR)
+         Q = IBUF(2,INTEGR)
+         R = IBUF(3,INTEGR)
+         S = IBUF(4,INTEGR)
+         GINT = BUF(INTEGR)
          IF (P.EQ.Q) GINT = GINT / 2
          IF (R.EQ.S) GINT = GINT / 2
          IF (P.EQ.R .AND. S.EQ.Q) GINT = GINT / 2
 C coulomb:
-         FADD = GINT*(DA(R,S)+DB(R,S)+DA(S,R)+DB(S,R))
-         J(P,Q) = J(P,Q) + FADD
-         J(Q,P) = J(Q,P) + FADD
-         FADD = GINT*(DA(P,Q)+DB(P,Q)+DA(Q,P)+DB(Q,P))
-         J(R,S) = J(R,S) + FADD
-         J(S,R) = J(S,R) + FADD
+         DO I=1, ND
+             FADD = GINT*(DA(R,S,I)+DB(R,S,I)+DA(S,R,I)+DB(S,R,I))
+             J(P,Q,I) = J(P,Q,I) + FADD
+             J(Q,P,I) = J(Q,P,I) + FADD
+             FADD = GINT*(DA(P,Q,I)+DB(P,Q,I)+DA(Q,P,I)+DB(Q,P,I))
+             J(R,S,I) = J(R,S,I) + FADD
+             J(S,R,I) = J(S,R,I) + FADD
 C exchange:
-         KA(P,S) = KA(P,S) + GINT*DA(R,Q)
-         KA(P,R) = KA(P,R) + GINT*DA(S,Q)
-         KA(Q,S) = KA(Q,S) + GINT*DA(R,P)
-         KA(Q,R) = KA(Q,R) + GINT*DA(S,P)
-         KA(R,Q) = KA(R,Q) + GINT*DA(P,S)
-         KA(S,Q) = KA(S,Q) + GINT*DA(P,R)
-         KA(R,P) = KA(R,P) + GINT*DA(Q,S)
-         KA(S,P) = KA(S,P) + GINT*DA(Q,R)
-         KB(P,S) = KB(P,S) + GINT*DB(R,Q)
-         KB(P,R) = KB(P,R) + GINT*DB(S,Q)
-         KB(Q,S) = KB(Q,S) + GINT*DB(R,P)
-         KB(Q,R) = KB(Q,R) + GINT*DB(S,P)
-         KB(R,Q) = KB(R,Q) + GINT*DB(P,S)
-         KB(S,Q) = KB(S,Q) + GINT*DB(P,R)
-         KB(R,P) = KB(R,P) + GINT*DB(Q,S)
-         KB(S,P) = KB(S,P) + GINT*DB(Q,R)
+             KA(P,S,I) = KA(P,S,I) + GINT*DA(R,Q,I)
+             KA(P,R,I) = KA(P,R,I) + GINT*DA(S,Q,I)
+             KA(Q,S,I) = KA(Q,S,I) + GINT*DA(R,P,I)
+             KA(Q,R,I) = KA(Q,R,I) + GINT*DA(S,P,I)
+             KA(R,Q,I) = KA(R,Q,I) + GINT*DA(P,S,I)
+             KA(S,Q,I) = KA(S,Q,I) + GINT*DA(P,R,I)
+             KA(R,P,I) = KA(R,P,I) + GINT*DA(Q,S,I)
+             KA(S,P,I) = KA(S,P,I) + GINT*DA(Q,R,I)
+             KB(P,S,I) = KB(P,S,I) + GINT*DB(R,Q,I)
+             KB(P,R,I) = KB(P,R,I) + GINT*DB(S,Q,I)
+             KB(Q,S,I) = KB(Q,S,I) + GINT*DB(R,P,I)
+             KB(Q,R,I) = KB(Q,R,I) + GINT*DB(S,P,I)
+             KB(R,Q,I) = KB(R,Q,I) + GINT*DB(P,S,I)
+             KB(S,Q,I) = KB(S,Q,I) + GINT*DB(P,R,I)
+             KB(R,P,I) = KB(R,P,I) + GINT*DB(Q,S,I)
+             KB(S,P,I) = KB(S,P,I) + GINT*DB(Q,R,I)
+        END DO
   100 CONTINUE
       RETURN
       END

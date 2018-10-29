@@ -3,7 +3,7 @@
 
 import numpy as np
 from fortran_binary import FortranBinary as FB
-from util.full import matrix
+from util.full import Matrix
 
 
 def info(filename="AOTWOINT"):
@@ -45,16 +45,12 @@ def list_integrals(*args, **kwargs):
             yield ig, g
 
 
-def fockab(Dab, **kwargs):
+def fockab(*Dab, **kwargs):
     """Routine for building alpha and beta fock matrix by reading AOTWOINT"""
 
-    filename = kwargs.get('filename', 'AOTWOINT')
-    hfc = kwargs.get('hfc', 1)
-    hfx = kwargs.get('hfx', 1)
-    f2py = kwargs.get('f2py', True)
+    assert len(Dab)>0
 
-    Da, Db = Dab
-    D = Da + Db
+    f2py = kwargs.get('f2py', True)
 
     if f2py is True:
         try:
@@ -63,24 +59,57 @@ def fockab(Dab, **kwargs):
             f2py = False
             print("Warning: non-existent sirfck.so wanted - reverting to python")
 
-
-    J = matrix(D.shape)
-    Ka = matrix(D.shape)
-    Kb = matrix(D.shape)
-
     if f2py:
-        for buf, ibuf in list_buffers(filename):
-            J, Ka, Kb = sirfck.fckab(
-                J, Ka, Kb, Da, Db, buf, ibuf.T
-                )
+        Fab = fock_builder_f(Dab, **kwargs)
     else:
-        for ig, g in list_integrals(filename):
-            p, q, r, s = ig
-            s, r, q, p = (p-1, q-1, r-1, s-1)
-            if ( p == q ): g *= .5
-            if ( r == s ): g *= .5
-            if ( p == r and q == s ): g *= .5
+        Fab = fock_builder_py(Dab, **kwargs)
+    return Fab
 
+def fock_builder_f(Dab, **kwargs):
+    import sirfck
+
+    filename = kwargs.get('filename', 'AOTWOINT')
+    hfc = kwargs.get('hfc', 1)
+    hfx = kwargs.get('hfx', 1)
+
+    Dshape = Dab[0][0].shape
+    fdim = (*Dshape, len(Dab))
+    Js = Matrix(fdim)
+    Kas = Matrix(fdim)
+    Kbs = Matrix(fdim)
+    Das = Matrix(fdim)
+    Dbs = Matrix(fdim)
+    for i, (Da, Db) in enumerate(Dab):
+        Das[:, :, i] = Da
+        Dbs[:, :, i] = Db
+    for buf, ibuf in list_buffers(filename):
+        Js, Kas, Kbs = sirfck.fckab(
+            Js, Kas, Kbs, Das, Dbs, buf, ibuf.T
+            )
+
+    Fas = (hfc*Js[:, :, i] - hfx*Kas[:, :, i] for i in range(len(Dab)))
+    Fbs = (hfc*Js[:, :, i] - hfx*Kbs[:, :, i] for i in range(len(Dab)))
+
+    Fab = tuple( (Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
+    return Fab
+
+def fock_builder_py(Dab, **kwargs):
+
+    filename = kwargs.get('filename', 'AOTWOINT')
+    hfc = kwargs.get('hfc', 1)
+    hfx = kwargs.get('hfx', 1)
+
+    Ds = [Da + Db for Da, Db in Dab]
+    Js = [Matrix(D.shape) for D in Ds]
+    Ks = [(Matrix(Da.shape), Matrix(Db.shape)) for Da, Db in Dab]
+    for ig, g in list_integrals(filename):
+        p, q, r, s = ig
+        s, r, q, p = (p-1, q-1, r-1, s-1)
+        if ( p == q ): g *= .5
+        if ( r == s ): g *= .5
+        if ( p == r and q == s ): g *= .5
+
+        for D, (Da, Db), J, (Ka, Kb) in zip(Ds, Dab, Js, Ks):
             Jadd = g * (D[r, s] + D[s, r])
             J[p, q] += Jadd
             J[q, p] += Jadd
@@ -104,9 +133,11 @@ def fockab(Dab, **kwargs):
             Kb[r, p] += g*Db[q, s]
             Kb[s, p] += g*Db[q, r]
 
-    Fa = hfc*J-hfx*Ka
-    Fb = hfc*J-hfx*Kb
-    return (Fa, Fb)
+    Fas = (hfc*J-hfx*Ka for J, (Ka, _) in zip(Js, Ks))
+    Fbs = (hfc*J-hfx*Kb for J, (_, Kb) in zip(Js, Ks))
+
+    Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
+    return Fab
 
 def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
     """Routine for building alpha and beta fock matrix by reading AOTWOINT"""
@@ -118,8 +149,8 @@ def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
             f2py = False
             print("Warning: non-existent sirfck.so wanted - reverting to python")
 
-    J = matrix(D.shape)
-    K = matrix(D.shape)
+    J = Matrix(D.shape)
+    K = Matrix(D.shape)
 
     if f2py:
         for buf, ibuf in list_buffers(filename):

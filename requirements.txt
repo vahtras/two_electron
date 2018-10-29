@@ -2,5 +2,5 @@
 
 -e .
 
-blocked-matrix-utils==1.0.0
+blocked-matrix-utils==1.0.1
 fortran-binary==1.0.1

@@ -2,7 +2,7 @@
 import unittest
 import os
 import numpy as np
-from util.full import matrix, init
+from util.full import Matrix, init
 from . import two
 from two import fockab, fock
 
@@ -34,30 +34,30 @@ class TwoTest(unittest.TestCase):
 
     def test_fab_p(self):
         """Test alpha and beta Fock matrix"""
-        d_a = matrix((6, 6))
-        d_b = matrix((6, 6))
+        d_a = Matrix((6, 6))
+        d_b = Matrix((6, 6))
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        f_a, f_b = fockab((d_a, d_b), filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=False)
+        (f_a, f_b), = fockab((d_a, d_b), filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=False)
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
     def test_fab_f(self):
         """Test alpha and beta Fock matrix, Fortran version"""
-        d_a = matrix((6, 6))
-        d_b = matrix((6, 6))
+        d_a = Matrix((6, 6))
+        d_b = Matrix((6, 6))
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        f_a, f_b = fockab((d_a, d_b), filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=True)
+        (f_a, f_b), = fockab((d_a, d_b), filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=True)
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
     def test_f_p(self):
         "Test total Fock, Python version"""
-        d_a = matrix((6, 6))
-        d_b = matrix((6, 6))
+        d_a = Matrix((6, 6))
+        d_b = Matrix((6, 6))
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
@@ -69,8 +69,8 @@ class TwoTest(unittest.TestCase):
 
     def test_f_f(self):
         "Test total Fock, Fortran version"""
-        d_a = matrix((6, 6))
-        d_b = matrix((6, 6))
+        d_a = Matrix((6, 6))
+        d_b = Matrix((6, 6))
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1

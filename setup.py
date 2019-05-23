@@ -13,5 +13,7 @@ ext = Extension(
 
 setup(
     name='two_electron',
+    packages=['two'],
+    install_requires=["blocked-matrix-utils", "fortran-binary"],
     ext_modules=[ext]
 )

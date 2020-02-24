@@ -9,7 +9,7 @@ except ImportError:
 from numpy.distutils.core import setup, Extension
 ext = Extension(
     name='sirfck',
-    sources=['two/sirfck.f'],
+    sources=['two/sirfck.c'],
     libraries=['blas']
 )
 

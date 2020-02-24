@@ -18,7 +18,7 @@ setup(
     author_email="olav.vahtras@gmail.com",
     version='1.0.0',
     url='https://github.com/vahtras/two_electron',
-    name='two_electron',
+    name='two-electron',
     packages=['two'],
     install_requires=["blocked-matrix-utils", "fortran-binary"],
     ext_modules=[ext]

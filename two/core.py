@@ -90,7 +90,7 @@ def fock_builder_f(Dab, **kwargs):
     Fas = (hfc*Js[:, :, i] - hfx*Kas[:, :, i] for i in range(len(Dab)))
     Fbs = (hfc*Js[:, :, i] - hfx*Kbs[:, :, i] for i in range(len(Dab)))
 
-    Fab = tuple( (Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
+    Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
     return Fab
 
 def fock_builder_py(Dab, **kwargs):

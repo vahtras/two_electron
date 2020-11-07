@@ -1,6 +1,6 @@
 /build
 /dist
-/venv*
+.venv*
 /*.egg-info
 *.pyc
 .coverage
@@ -13,3 +13,4 @@ src
 prof*
 *nb
 *.err
+.tox

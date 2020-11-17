@@ -21,7 +21,7 @@ ext = Extension(
 )
 
 setup(
-    name='two_electron',
+    name='two-electron',
     version=__version__,
     author="Olav Vahtras",
     author_email="olav.vahtras@gmail.com",

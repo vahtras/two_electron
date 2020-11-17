@@ -1,18 +1,20 @@
 """Some docstring"""
-import unittest
 import os
+import pathlib
+
 import numpy as np
 from util.full import Matrix, init
-from . import two
 from two import fockab, fock
 
-class TwoTest(unittest.TestCase):
+
+class TestTwo:
     """Two-fock test suite"""
 
-    def setUp(self):
+    def setup(self):
         """Setup supporting directory"""
         name, _ = os.path.splitext(__file__)
-        self.suppdir = name + ".d"
+        self.suppdir = pathlib.Path(name + ".d")
+        self.aotwoint = self.suppdir/"AOTWOINT"
 
         self.faref = init([
             [2.02818057, 0.26542036, 0.00000000, 0.06037429, 0.00000000, 0.00000000],
@@ -39,7 +41,7 @@ class TwoTest(unittest.TestCase):
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        (f_a, f_b), = fockab((d_a, d_b), filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=False)
+        (f_a, f_b), = fockab((d_a, d_b), filename=self.aotwoint, f2py=False)
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
@@ -50,7 +52,7 @@ class TwoTest(unittest.TestCase):
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        (f_a, f_b), = fockab((d_a, d_b), filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=True)
+        (f_a, f_b), = fockab((d_a, d_b), filename=self.aotwoint, f2py=True)
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
@@ -62,7 +64,7 @@ class TwoTest(unittest.TestCase):
         d_a[1, 1] = 1
         d_b[0, 0] = 1
         dtot = d_a + d_b
-        ftot = fock(dtot, filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=False)
+        ftot = fock(dtot, filename=self.aotwoint, f2py=False)
 
         fref = 0.5*(self.faref+self.fbref)
         np.testing.assert_allclose(ftot, fref)
@@ -75,11 +77,35 @@ class TwoTest(unittest.TestCase):
         d_a[1, 1] = 1
         d_b[0, 0] = 1
         dtot = d_a + d_b
-        ftot = fock(dtot, filename=os.path.join(self.suppdir, "AOTWOINT"), f2py=True)
+        ftot = fock(dtot, filename=self.aotwoint, f2py=True)
 
         fref = 0.5*(self.faref+self.fbref)
         np.testing.assert_allclose(ftot, fref)
 
+    def test_fs_p(self):
+        "Test spin Fock, Python version"""
+        d_a = Matrix((6, 6))
+        d_b = Matrix((6, 6))
+        d_a[0, 0] = 1
+        d_a[1, 1] = 1
+        d_b[0, 0] = 1
+        dspin = d_a - d_b
+        fspin = fock(dspin, hfc=0, filename=self.aotwoint,  f2py=False)
 
-if __name__ == "__main__":
-    unittest.main()
+        fref = 0.5*(self.faref-self.fbref)
+
+        np.testing.assert_allclose(fspin, fref, atol=1e-8)
+
+    def test_fs_f(self):
+        "Test spin Fock, Python version"""
+        d_a = Matrix((6, 6))
+        d_b = Matrix((6, 6))
+        d_a[0, 0] = 1
+        d_a[1, 1] = 1
+        d_b[0, 0] = 1
+        dspin = d_a - d_b
+        fspin = fock(dspin, hfc=0, filename=self.aotwoint, f2py=True)
+
+        fref = 0.5*(self.faref-self.fbref)
+
+        np.testing.assert_allclose(fspin, fref, atol=1e-8)

@@ -1,13 +1,7 @@
 import unittest
-try:
-    import mock
-except ImportError:
-    import unittest.mock as mock
-import sys
 import os
 import numpy as np
-from util.full import init, matrix
-from . import two
+from util.full import matrix
 from two import twoso
 
 class TestSpinOrbitCl(unittest.TestCase):
@@ -37,7 +31,7 @@ class TestSpinOrbitCl(unittest.TestCase):
         for ni, no, offset in zip(ndim, nocc_, idim):
             if ni > 0:
                 cmoi = self.cmo[:, offset: offset + ni]
-                dens += no*cmoi*cmoi.T
+                dens += no*cmoi@cmoi.T
 
         return dens
 
@@ -71,7 +65,7 @@ class TestSpinOrbitCla(TestSpinOrbitCl):
 
     def test_fc(self):
         fc = twoso.fock(self.di, 'z' , filename=self.ao2soint)
-        fcmo = self.cmo.T*fc*self.cmo
+        fcmo = self.cmo.T@fc@self.cmo
         np.testing.assert_almost_equal(fcmo[10, 14], -20.80725730)
 
     def test_fab(self):
@@ -100,7 +94,7 @@ class TestSpinOrbitClb(TestSpinOrbitCl):
 
     def test_fc(self):
         fc = twoso.fock(self.di, 'z' , filename=self.ao2soint)
-        fcmo = self.cmo.T*fc*self.cmo
+        fcmo = self.cmo.T@fc@self.cmo
         np.testing.assert_almost_equal(fcmo[10, 14], -21.29974013)
 
     def test_fab(self):

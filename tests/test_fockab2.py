@@ -8,7 +8,7 @@ from two import fockab, fock
 class TestTwo:
     """Two-fock test suite"""
 
-    def setup(self):
+    def setup_method(self):
         """Setup supporting directory"""
         self.suppdir = pathlib.Path(__file__).with_suffix(".d")
         self.aotwoint = self.suppdir/"AOTWOINT"

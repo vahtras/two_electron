@@ -10,7 +10,7 @@ from two import fockab, fock
 class TestTwo:
     """Two-fock test suite"""
 
-    def setup(self):
+    def setup_method(self):
         """Setup supporting directory"""
         name, _ = os.path.splitext(__file__)
         self.suppdir = pathlib.Path(name + ".d")

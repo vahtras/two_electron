@@ -219,8 +219,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--file',
-        default='/tmp/AOTWOINT',
+        'file',
         help='Two-electron integral file'
     )
     parser.add_argument(

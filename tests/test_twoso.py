@@ -58,7 +58,7 @@ class TestSpinOrbit(unittest.TestCase):
     @mock.patch('two.twoso.list_integrals')
     def test_arg_int(self, mock_list):
         print(sys.argv)
-        sys.argv[1:] = ['-d', '/dev/null', '-l']
+        sys.argv[1:] = ['/dev/null/AO2SOINT', '-l']
         mock_list.return_value=[('x', (0,0,0,0), 3.14)]
         twoso.main()
         mock_list.assert_called_once_with('/dev/null/AO2SOINT')

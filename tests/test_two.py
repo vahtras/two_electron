@@ -1,10 +1,13 @@
-import  unittest
 import os
-import sys
 import subprocess
+import sys
+import unittest
+
 import numpy
 from util.full import matrix
-from . import two
+
+import two.core
+
 try:
     import mock
 except ImportError:
@@ -18,7 +21,7 @@ class TwoTest(unittest.TestCase):
         self.aotwoint = os.path.join(suppdir, "AOTWOINT")
 
     def test_basinfo(self):
-        info = two.info(self.aotwoint)
+        info = two.core.info(self.aotwoint)
         self.assertEqual(info["nsym"], 1)
         numpy.testing.assert_equal(info["nbas"], [7,0,0,0,0,0,0,0])
         self.assertEqual(info["lbuf"], 600)
@@ -40,7 +43,6 @@ class TestBase(unittest.TestCase):
         root, ext = n, e = os.path.splitext(__file__)
         cls.base_dir = root + ".d"
         
-#@unittest.skip('generate integral files to run')
 class TestH2O(TestBase):
 
     @classmethod
@@ -55,7 +57,7 @@ class TestH2O(TestBase):
         if not os.path.exists(cls.aotwoint):
             os.chdir(cls.tmpdir)
             args = ['dalton', '-get', 'AOTWOINT', cls.dal, cls.mol]
-            #subprocess.call(args)
+            subprocess.call(args)
 
     def test_number_of_integrals(self):
         self.assertEqual(len(list(two.list_integrals(self.aotwoint))), 11412)
@@ -79,7 +81,7 @@ class TestH2O(TestBase):
     @mock.patch('two.core.list_integrals')
     def test_arg_int(self, mock_list):
         print(sys.argv)
-        sys.argv[1:] = ['--file', '/dev/null/AOTWOINT', '--list']
+        sys.argv[1:] = ['/dev/null/AOTWOINT', '--list']
         mock_list.return_value=[((0,0,0,0), 3.14)]
         two.main()
         mock_list.assert_called_once_with('/dev/null/AOTWOINT')

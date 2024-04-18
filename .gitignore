@@ -14,3 +14,4 @@ prof*
 *nb
 *.err
 .tox
+.python_version

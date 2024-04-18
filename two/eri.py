@@ -221,7 +221,7 @@ def main():
         help='Two-electron integral file'
     )
     parser.add_argument(
-        '--list',
+        '-l', '--list',
         action='store_true',
         help='List integrals on file'
     )

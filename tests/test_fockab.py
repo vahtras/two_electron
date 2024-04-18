@@ -41,7 +41,7 @@ class TestTwo:
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        (f_a, f_b), = self.reader.fockab((d_a, d_b), filename=self.aotwoint, f2py=False)
+        (f_a, f_b), = self.reader.fockab((d_a, d_b), f2py=False)
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
@@ -52,7 +52,7 @@ class TestTwo:
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        (f_a, f_b), = self.reader.fockab((d_a, d_b), filename=self.aotwoint, f2py=True)
+        (f_a, f_b), = self.reader.fockab((d_a, d_b), f2py=True)
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 

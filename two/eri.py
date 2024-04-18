@@ -78,7 +78,7 @@ class Reader:
                 print("Warning: sirfck.so not found - reverting to python")
                 f2py = False
 
-            for buf, ibuf in self.list_buffers(self.filename):
+            for buf, ibuf in self.list_buffers():
                 J, K = sirfck.fck(
                     J, K,  D, D, buf, ibuf.T
                     )
@@ -137,7 +137,6 @@ class Reader:
 
     def fock_builder_f(self, Dab, **kwargs):
 
-        filename = kwargs.get('filename', 'AOTWOINT')
         hfc = kwargs.get('hfc', 1)
         hfx = kwargs.get('hfx', 1)
 
@@ -151,7 +150,7 @@ class Reader:
         for i, (Da, Db) in enumerate(Dab):
             Das[:, :, i] = Da
             Dbs[:, :, i] = Db
-        for buf, ibuf in self.list_buffers(filename):
+        for buf, ibuf in self.list_buffers():
             Js, Kas, Kbs = sirfck.fckab(
                 Js, Kas, Kbs, Das, Dbs, buf, ibuf.T
                 )

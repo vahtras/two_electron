@@ -1,4 +1,5 @@
 import sys
+import sqlite3
 
 from fortran_binary import FortranBinary
 import numpy as np
@@ -55,58 +56,38 @@ class Reader:
                 return
             yield buf[:length], ibuf[:length]
 
-    def fock(self, D, hfc=1, hfx=1, f2py=True):
-        """Routine for building alpha and beta fock matrix by reading AOTWOINT"""
-
-        if 'sirfck' in sys.modules:
-            pass
-        else:
-            import warnings
-            warnings.warn(
-                "Warning: non-existent sirfck.so wanted"
-                "- reverting to python"
-            )
-            f2py = False
+    def fock(self, D, hfc=1, hfx=1):
+        """
+        Routine for building J and K Fock matrices reading AOTWOINT
+        """
 
         J = np.zeros(D.shape)
         K = np.zeros(D.shape)
 
-        if f2py:
-            try:
-                import sirfck
-            except ImportError:
-                print("Warning: sirfck.so not found - reverting to python")
-                f2py = False
+        for ig, g in self.list_integrals():
+            p, q, r, s = ig
+            s, r, q, p = (p-1, q-1, r-1, s-1)
+            if (p == q):
+                g *= .5
+            if (r == s):
+                g *= .5
+            if (p == r and q == s):
+                g *= .5
 
-            for buf, ibuf in self.list_buffers():
-                J, K = sirfck.fck(
-                    J, K,  D, D, buf, ibuf.T
-                    )
-        else:
-            for ig, g in self.list_integrals():
-                p, q, r, s = ig
-                s, r, q, p = (p-1, q-1, r-1, s-1)
-                if (p == q):
-                    g *= .5
-                if (r == s):
-                    g *= .5
-                if (p == r and q == s):
-                    g *= .5
-
-                Jadd = g * (D[r, s] + D[s, r])
-                J[p, q] += Jadd
-                J[q, p] += Jadd
-                Jadd = g * (D[p, q] + D[q, p])
-                J[r, s] += Jadd
-                J[s, r] += Jadd
-                K[p, s] += g*D[r, q]
-                K[p, r] += g*D[s, q]
-                K[q, s] += g*D[r, p]
-                K[q, r] += g*D[s, p]
-                K[r, q] += g*D[p, s]
-                K[s, q] += g*D[p, r]
-                K[r, p] += g*D[q, s]
-                K[s, p] += g*D[q, r]
+            Jadd = g * (D[r, s] + D[s, r])
+            J[p, q] += Jadd
+            J[q, p] += Jadd
+            Jadd = g * (D[p, q] + D[q, p])
+            J[r, s] += Jadd
+            J[s, r] += Jadd
+            K[p, s] += g*D[r, q]
+            K[p, r] += g*D[s, q]
+            K[q, s] += g*D[r, p]
+            K[q, r] += g*D[s, p]
+            K[r, q] += g*D[p, s]
+            K[s, q] += g*D[p, r]
+            K[r, p] += g*D[q, s]
+            K[s, p] += g*D[q, r]
 
         return hfc*J - 0.5*hfx*K
 
@@ -117,52 +98,10 @@ class Reader:
 
         assert len(Dab) > 0
 
-        f2py = kwargs.get('f2py', True)
-
-        if f2py:
-            if 'sirfck' in sys.modules:
-                pass
-            else:
-                print(
-                    "Warning: non-existent sirfck.so wanted"
-                    "- reverting to python"
-                )
-                f2py = False
-
-        if f2py:
-            Fab = self.fock_builder_f(Dab, **kwargs)
-        else:
-            Fab = self.fock_builder_py(Dab, **kwargs)
+        Fab = self.fock_builder(Dab, **kwargs)
         return Fab
 
-    def fock_builder_f(self, Dab, **kwargs):
-
-        hfc = kwargs.get('hfc', 1)
-        hfx = kwargs.get('hfx', 1)
-
-        Dshape = Dab[0][0].shape
-        fdim = (*Dshape, len(Dab))
-        Js = np.zeros(fdim)
-        Kas = np.zeros(fdim)
-        Kbs = np.zeros(fdim)
-        Das = np.zeros(fdim)
-        Dbs = np.zeros(fdim)
-        for i, (Da, Db) in enumerate(Dab):
-            Das[:, :, i] = Da
-            Dbs[:, :, i] = Db
-        for buf, ibuf in self.list_buffers():
-            Js, Kas, Kbs = sirfck.fckab(
-                Js, Kas, Kbs, Das, Dbs, buf, ibuf.T
-                )
-
-        Fas = (hfc*Js[:, :, i] - hfx*Kas[:, :, i] for i in range(len(Dab)))
-        Fbs = (hfc*Js[:, :, i] - hfx*Kbs[:, :, i] for i in range(len(Dab)))
-
-        Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
-        return Fab
-
-
-    def fock_builder_py(self, Dab, **kwargs):
+    def fock_builder(self, Dab, **kwargs):
 
         hfc = kwargs.get('hfc', 1)
         hfx = kwargs.get('hfx', 1)
@@ -210,6 +149,34 @@ class Reader:
         Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
         return Fab
 
+    def to_sql(self, con):
+        """Create SQL table for two-electron spin-orbit integrals"""
+
+        cur = con.cursor()
+        cur.execute(
+            """CREATE TABLE IF NOT EXISTS aotwoint (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            p INTEGER,
+            q INTEGER,
+            r INTEGER,
+            s INTEGER,
+            value REAL)"""
+        )
+
+        # cur.execute("CREATE INDEX IF NOT EXISTS aotwoint_idx ON aotwoint(comp,p,q,r,s)")
+
+        cur.execute("BEGIN TRANSACTION")
+        for ig, g in self.list_integrals():
+            p, q, r, s = (int(_) for _ in ig)
+            g = float(g)
+            record = (p, q, r, s, g)
+            print(record)
+            cur.execute(
+                "INSERT INTO aotwoint(p,q,r,s,value) VALUES(?,?,?,?,?)",
+                record,
+            )
+        cur.execute("COMMIT")
+
 def main():
 
     import argparse
@@ -224,15 +191,61 @@ def main():
         action='store_true',
         help='List integrals on file'
     )
+    parser.add_argument('--to-sql', action="store_true", help="Create SQL table")
 
     args = parser.parse_args()
 
+    reader = Reader(args.file)
     if args.list:
         print("List integrals")
-        reader = Reader(args.file)
         for ig, g in reader.list_integrals():
             print(ig, g)
 
+    if args.to_sql:
+        con = sqlite3.connect('aotwoint.db')
+        reader.to_sql(con)
+
+
+class FReader(Reader):
+
+    def fock(self, D, hfc=1, hfx=1):
+        """Routine for building alpha and beta fock matrix by reading AOTWOINT"""
+
+        J = np.zeros(D.shape)
+        K = np.zeros(D.shape)
+
+        for buf, ibuf in self.list_buffers():
+            J, K = sirfck.fck(
+                J, K,  D, D, buf, ibuf.T
+                )
+
+        return hfc*J - 0.5*hfx*K
+
+    def fock_builder(self, Dab, **kwargs):
+
+        hfc = kwargs.get('hfc', 1)
+        hfx = kwargs.get('hfx', 1)
+
+        Dshape = Dab[0][0].shape
+        fdim = (*Dshape, len(Dab))
+        Js = np.zeros(fdim)
+        Kas = np.zeros(fdim)
+        Kbs = np.zeros(fdim)
+        Das = np.zeros(fdim)
+        Dbs = np.zeros(fdim)
+        for i, (Da, Db) in enumerate(Dab):
+            Das[:, :, i] = Da
+            Dbs[:, :, i] = Db
+        for buf, ibuf in self.list_buffers():
+            Js, Kas, Kbs = sirfck.fckab(
+                Js, Kas, Kbs, Das, Dbs, buf, ibuf.T
+                )
+
+        Fas = (hfc*Js[:, :, i] - hfx*Kas[:, :, i] for i in range(len(Dab)))
+        Fbs = (hfc*Js[:, :, i] - hfx*Kbs[:, :, i] for i in range(len(Dab)))
+
+        Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
+        return Fab
 
 if __name__ == "__main__":
     sys.exit(main())

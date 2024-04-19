@@ -1,8 +1,7 @@
-import os
 import pathlib
 
 import numpy as np
-from two import fockab, fock
+import two.eri
 
 
 class TestTwo:
@@ -12,6 +11,8 @@ class TestTwo:
         """Setup supporting directory"""
         self.suppdir = pathlib.Path(__file__).with_suffix(".d")
         self.aotwoint = self.suppdir/"AOTWOINT"
+        self.reader = two.eri.Reader(self.aotwoint)
+        self.freader = two.eri.FReader(self.aotwoint)
 
         self.faref = np.loadtxt(self.suppdir/'fa.ref')
         self.fbref = np.loadtxt(self.suppdir/'fb.ref')
@@ -22,21 +23,21 @@ class TestTwo:
     def test_fab_p(self):
         """Test alpha and beta Fock matrix"""
         d_a, d_b = self.daref, self.dbref
-        (f_a, f_b), = fockab((d_a, d_b), filename=self.aotwoint, f2py=False)
+        (f_a, f_b), = self.reader.fockab((d_a, d_b))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
     def test_fab_f(self):
         """Test alpha and beta Fock matrix, Fortran version"""
         d_a, d_b = self.daref, self.dbref
-        (f_a, f_b), = fockab((d_a, d_b), filename=self.aotwoint, f2py=True)
+        (f_a, f_b), = self.freader.fockab((d_a, d_b))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
     def test_f_p(self):
         "Test total Fock, Python version"""
         dtot = self.daref + self.dbref
-        ftot = fock(dtot, filename=self.aotwoint, f2py=False)
+        ftot = self.reader.fock(dtot)
 
         fref = 0.5*(self.faref+self.fbref)
         np.testing.assert_allclose(ftot, fref)
@@ -44,7 +45,7 @@ class TestTwo:
     def test_f_f(self):
         "Test total Fock, Fortran version"""
         dtot = self.daref + self.dbref
-        ftot = fock(dtot, filename=self.aotwoint, f2py=True)
+        ftot = self.freader.fock(dtot)
 
         fref = 0.5*(self.faref + self.fbref)
         np.testing.assert_allclose(ftot, fref)
@@ -52,7 +53,7 @@ class TestTwo:
     def test_fs_p(self):
         "Test spin Fock, Python version"""
         dspin = self.daref - self.dbref
-        fspin = fock(dspin, hfc=0, filename=self.aotwoint,  f2py=False)
+        fspin = self.reader.fock(dspin, hfc=0)
 
         fref = 0.5*(self.faref - self.fbref)
 
@@ -61,7 +62,7 @@ class TestTwo:
     def test_fs_f(self):
         "Test spin Fock, Python version"""
         dspin = self.daref - self.dbref
-        fspin = fock(dspin, hfc=0, filename=self.aotwoint, f2py=True)
+        fspin = self.freader.fock(dspin, hfc=0)
 
         fref = 0.5*(self.faref - self.fbref)
 

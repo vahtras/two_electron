@@ -15,6 +15,7 @@ class TestTwo:
         self.suppdir = pathlib.Path(name + ".d")
         self.aotwoint = self.suppdir/"AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
+        self.freader = two.eri.FReader(self.aotwoint)
 
         self.faref = np.array([
             [2.02818057, 0.26542036, 0.00000000, 0.06037429, 0.00000000, 0.00000000],
@@ -41,7 +42,7 @@ class TestTwo:
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        (f_a, f_b), = self.reader.fockab((d_a, d_b), f2py=False)
+        (f_a, f_b), = self.reader.fockab((d_a, d_b))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
@@ -52,7 +53,7 @@ class TestTwo:
         d_a[0, 0] = 1
         d_a[1, 1] = 1
         d_b[0, 0] = 1
-        (f_a, f_b), = self.reader.fockab((d_a, d_b), f2py=True)
+        (f_a, f_b), = self.freader.fockab((d_a, d_b))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
@@ -64,7 +65,7 @@ class TestTwo:
         d_a[1, 1] = 1
         d_b[0, 0] = 1
         dtot = d_a + d_b
-        ftot = self.reader.fock(dtot, f2py=False)
+        ftot = self.reader.fock(dtot)
 
         fref = 0.5*(self.faref+self.fbref)
         np.testing.assert_allclose(ftot, fref)
@@ -77,7 +78,7 @@ class TestTwo:
         d_a[1, 1] = 1
         d_b[0, 0] = 1
         dtot = d_a + d_b
-        ftot = self.reader.fock(dtot, f2py=True)
+        ftot = self.freader.fock(dtot)
 
         fref = 0.5*(self.faref+self.fbref)
         np.testing.assert_allclose(ftot, fref)
@@ -90,7 +91,7 @@ class TestTwo:
         d_a[1, 1] = 1
         d_b[0, 0] = 1
         dspin = d_a - d_b
-        fspin = self.reader.fock(dspin, hfc=0, f2py=False)
+        fspin = self.reader.fock(dspin, hfc=0)
 
         fref = 0.5*(self.faref-self.fbref)
 
@@ -104,7 +105,7 @@ class TestTwo:
         d_a[1, 1] = 1
         d_b[0, 0] = 1
         dspin = d_a - d_b
-        fspin = self.reader.fock(dspin, hfc=0, f2py=True)
+        fspin = self.freader.fock(dspin, hfc=0)
 
         fref = 0.5*(self.faref-self.fbref)
 

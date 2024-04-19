@@ -12,6 +12,7 @@ class TestERI:
         suppdir  = pathlib.Path(__file__).with_suffix(".d")
         self.aotwoint = suppdir / "AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
+        self.freader = two.eri.FReader(self.aotwoint)
 
     def test_basinfo(self):
         info = self.reader.basinfo()
@@ -34,6 +35,7 @@ class TestH2O:
 
         self.aotwoint = suppdir / "hf_H2O_ccpVDZ.AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
+        self.freader = two.eri.FReader(self.aotwoint)
 
         self.d = np.loadtxt(suppdir / 'dcao').reshape((24, 24))
         self.f = np.loadtxt(suppdir / 'fcao').reshape((24, 24))
@@ -41,12 +43,12 @@ class TestH2O:
     def test_number_of_integrals(self):
         assert len(list(self.reader.list_integrals())) ==  11412
 
-    def test_dens_fock(self):
-        fock = self.reader.fock(self.d, f2py=False)
+    def test_dens_fock_py(self):
+        fock = self.reader.fock(self.d)
         np.testing.assert_almost_equal(fock, self.f)
 
-    def test_dens_fock_f2py(self):
-        fock = self.reader.fock(self.d, f2py=True)
+    def test_dens_fock_f(self):
+        fock = self.freader.fock(self.d)
         np.testing.assert_almost_equal(fock, self.f)
 
     @patch('two.eri.Reader.list_integrals')

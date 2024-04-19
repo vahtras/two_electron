@@ -28,35 +28,6 @@ class SpinOrbitReader(Reader):
                 else:
                     yield comp, ig, g
 
-    def to_sql(self, con):
-        """Create SQL table for two-electron spin-orbit integrals"""
-
-        cur = con.cursor()
-        cur.execute(
-            """CREATE TABLE IF NOT EXISTS ao2soint (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            comp INTEGER,
-            p INTEGER,
-            q INTEGER,
-            r INTEGER,
-            s INTEGER,
-            value REAL)"""
-        )
-
-        # cur.execute("CREATE INDEX IF NOT EXISTS ao2soint_idx ON ao2soint(comp,p,q,r,s)")
-
-        cur.execute("BEGIN TRANSACTION")
-        for comp, ig, g in self.list_integrals():
-            comp = int(comp)
-            p, q, r, s = (int(_) for _ in ig)
-            g = float(g)
-            record = (comp, p, q, r, s, g)
-            print(record)
-            cur.execute(
-                "INSERT INTO ao2soint(comp,p,q,r,s,value) VALUES(?,?,?,?,?,?)",
-                record,
-            )
-        cur.execute("COMMIT")
 
     def fock(self, D, component, **kwargs):
         """Generate two-electron spin-orbit Fock matrix
@@ -176,6 +147,36 @@ class SpinOrbitReader(Reader):
                     Fb[s, p] -= x * Db[q, r]
 
         return (Fa, Fb)
+
+    def to_sql(self, con):
+        """Create SQL table for two-electron spin-orbit integrals"""
+
+        cur = con.cursor()
+        cur.execute(
+            """CREATE TABLE IF NOT EXISTS ao2soint (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            comp INTEGER,
+            p INTEGER,
+            q INTEGER,
+            r INTEGER,
+            s INTEGER,
+            value REAL)"""
+        )
+
+        # cur.execute("CREATE INDEX IF NOT EXISTS ao2soint_idx ON ao2soint(comp,p,q,r,s)")
+
+        cur.execute("BEGIN TRANSACTION")
+        for comp, ig, g in self.list_integrals():
+            comp = int(comp)
+            p, q, r, s = (int(_) for _ in ig)
+            g = float(g)
+            record = (comp, p, q, r, s, g)
+            print(record)
+            cur.execute(
+                "INSERT INTO ao2soint(comp,p,q,r,s,value) VALUES(?,?,?,?,?,?)",
+                record,
+            )
+        cur.execute("COMMIT")
 
 
 def main():

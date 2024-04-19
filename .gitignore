@@ -15,3 +15,4 @@ prof*
 *.err
 .tox
 .python-version
+*.db

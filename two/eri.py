@@ -36,7 +36,7 @@ class Reader:
         """
         for buf, ibuf in self.list_buffers():
             for g, ig in zip(buf, ibuf):
-                yield ig, g
+                yield tuple(ig), g
 
     def list_buffers(self, label="BASTWOEL"):
         """
@@ -246,6 +246,17 @@ class FReader(Reader):
 
         Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
         return Fab
+
+class SQLReader(Reader):
+    def list_integrals(self):
+        """
+        List two-electron spin-orbit integrals in file
+        """
+        con = sqlite3.connect(self.filename)
+        cur = con.cursor()
+        cur.execute("SELECT p, q, r, s, value FROM aotwoint")
+        for ig in cur:
+            yield ig[:4], ig[4]
 
 if __name__ == "__main__":
     sys.exit(main())

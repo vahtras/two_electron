@@ -11,8 +11,10 @@ class TestERI:
     def setup_method(self):
         suppdir  = pathlib.Path(__file__).with_suffix(".d")
         self.aotwoint = suppdir / "AOTWOINT"
+        self.aotwoint_db = suppdir / "aotwoint.db"
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
+        self.sqlreader = two.eri.SQLReader(self.aotwoint_db)
 
     def test_basinfo(self):
         info = self.reader.basinfo()
@@ -22,11 +24,23 @@ class TestERI:
         assert info["nibuf"] == 1
         assert info["nbits"] == 8
 
-    def test_first_integral(self):
+    def test_first_integral_py(self):
         for ig, g in self.reader.list_integrals():
             break
         assert g == approx(4.78506540471)
-        assert all(ig  == (1, 1, 1, 1))
+        assert ig  == (1, 1, 1, 1)
+
+    def test_first_integral_f(self):
+        for ig, g in self.freader.list_integrals():
+            break
+        assert g == approx(4.78506540471)
+        assert ig  == (1, 1, 1, 1)
+
+    def test_first_integral_sql(self):
+        for ig, g in self.sqlreader.list_integrals():
+            break
+        assert g == approx(4.78506540471)
+        assert ig  == (1, 1, 1, 1)
 
 
 class TestH2O:
@@ -36,12 +50,14 @@ class TestH2O:
         self.aotwoint = suppdir / "hf_H2O_ccpVDZ.AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
+        self.sqlreader = two.eri.SQLReader(suppdir / 'aotwoint.db')
 
         self.d = np.loadtxt(suppdir / 'dcao').reshape((24, 24))
         self.f = np.loadtxt(suppdir / 'fcao').reshape((24, 24))
 
     def test_number_of_integrals(self):
         assert len(list(self.reader.list_integrals())) ==  11412
+        assert len(list(self.sqlreader.list_integrals())) ==  11412
 
     def test_dens_fock_py(self):
         fock = self.reader.fock(self.d)

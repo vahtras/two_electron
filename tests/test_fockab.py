@@ -4,6 +4,7 @@ import pathlib
 
 import numpy as np
 import two.eri
+import pytest
 
 
 class TestTwo:
@@ -16,6 +17,24 @@ class TestTwo:
         self.aotwoint = self.suppdir/"AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
+
+        self.daref = np.array([
+            [1.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 1.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            ])
+
+        self.dbref = np.array([
+            [1.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
+            ])
 
         self.faref = np.array([
             [2.02818057, 0.26542036, 0.00000000, 0.06037429, 0.00000000, 0.00000000],
@@ -35,78 +54,27 @@ class TestTwo:
             [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 1.07479494],
             ])
 
-    def test_fab_p(self):
+    @pytest.mark.parametrize("reader", ["reader", "freader"])
+    def test_fab(self, reader):
         """Test alpha and beta Fock matrix"""
-        d_a = np.zeros((6, 6))
-        d_b = np.zeros((6, 6))
-        d_a[0, 0] = 1
-        d_a[1, 1] = 1
-        d_b[0, 0] = 1
-        (f_a, f_b), = self.reader.fockab((d_a, d_b))
+        (f_a, f_b), = getattr(self, reader).fockab((self.daref, self.dbref))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
-    def test_fab_f(self):
-        """Test alpha and beta Fock matrix, Fortran version"""
-        d_a = np.zeros((6, 6))
-        d_b = np.zeros((6, 6))
-        d_a[0, 0] = 1
-        d_a[1, 1] = 1
-        d_b[0, 0] = 1
-        (f_a, f_b), = self.freader.fockab((d_a, d_b))
-        np.testing.assert_allclose(f_a, self.faref)
-        np.testing.assert_allclose(f_b, self.fbref)
-
-    def test_f_p(self):
+    @pytest.mark.parametrize("reader", ["reader", "freader"])
+    def test_f(self, reader):
         "Test total Fock, Python version"""
-        d_a = np.zeros((6, 6))
-        d_b = np.zeros((6, 6))
-        d_a[0, 0] = 1
-        d_a[1, 1] = 1
-        d_b[0, 0] = 1
-        dtot = d_a + d_b
-        ftot = self.reader.fock(dtot)
+        dtot = self.daref + self.dbref
+        ftot = getattr(self, reader).fock(dtot)
 
         fref = 0.5*(self.faref+self.fbref)
         np.testing.assert_allclose(ftot, fref)
 
-    def test_f_f(self):
-        "Test total Fock, Fortran version"""
-        d_a = np.zeros((6, 6))
-        d_b = np.zeros((6, 6))
-        d_a[0, 0] = 1
-        d_a[1, 1] = 1
-        d_b[0, 0] = 1
-        dtot = d_a + d_b
-        ftot = self.freader.fock(dtot)
-
-        fref = 0.5*(self.faref+self.fbref)
-        np.testing.assert_allclose(ftot, fref)
-
-    def test_fs_p(self):
+    @pytest.mark.parametrize("reader", ["reader", "freader"])
+    def test_fs(self, reader):
         "Test spin Fock, Python version"""
-        d_a = np.zeros((6, 6))
-        d_b = np.zeros((6, 6))
-        d_a[0, 0] = 1
-        d_a[1, 1] = 1
-        d_b[0, 0] = 1
-        dspin = d_a - d_b
-        fspin = self.reader.fock(dspin, hfc=0)
+        dspin = self.daref - self.dbref
+        fspin = getattr(self, reader).fock(dspin, hfc=0)
 
         fref = 0.5*(self.faref-self.fbref)
-
-        np.testing.assert_allclose(fspin, fref, atol=1e-8)
-
-    def test_fs_f(self):
-        "Test spin Fock, Python version"""
-        d_a = np.zeros((6, 6))
-        d_b = np.zeros((6, 6))
-        d_a[0, 0] = 1
-        d_a[1, 1] = 1
-        d_b[0, 0] = 1
-        dspin = d_a - d_b
-        fspin = self.freader.fock(dspin, hfc=0)
-
-        fref = 0.5*(self.faref-self.fbref)
-
         np.testing.assert_allclose(fspin, fref, atol=1e-8)

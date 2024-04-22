@@ -17,6 +17,7 @@ class TestTwo:
         self.aotwoint = self.suppdir/"AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
+        self.sqlreader = two.eri.SQLReader(self.suppdir/"aotwoint.db")
 
         self.daref = np.array([
             [1.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
@@ -61,10 +62,13 @@ class TestTwo:
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
-    @pytest.mark.parametrize("reader", ["reader", "freader"])
+    @pytest.mark.parametrize("reader", ["reader", "freader",  "sqlreader"])
     def test_f(self, reader):
         "Test total Fock, Python version"""
+        if reader == 'sqlreader':
+            pytest.skip("SQLReader not implemented")
         dtot = self.daref + self.dbref
+        # ftot = benchmark(getattr(self, reader).fock, dtot)
         ftot = getattr(self, reader).fock(dtot)
 
         fref = 0.5*(self.faref+self.fbref)

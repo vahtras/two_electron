@@ -1,3 +1,4 @@
+import pathlib
 import sys
 import sqlite3
 
@@ -149,61 +150,7 @@ class Reader:
         Fab = tuple((Fa, Fb) for Fa, Fb in zip(Fas, Fbs))
         return Fab
 
-    def to_sql(self, con):
-        """Create SQL table for two-electron spin-orbit integrals"""
 
-        cur = con.cursor()
-        cur.execute(
-            """CREATE TABLE IF NOT EXISTS aotwoint (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            p INTEGER,
-            q INTEGER,
-            r INTEGER,
-            s INTEGER,
-            value REAL)"""
-        )
-
-        # cur.execute("CREATE INDEX IF NOT EXISTS aotwoint_idx ON aotwoint(comp,p,q,r,s)")
-
-        cur.execute("BEGIN TRANSACTION")
-        for ig, g in self.list_integrals():
-            p, q, r, s = (int(_) for _ in ig)
-            g = float(g)
-            record = (p, q, r, s, g)
-            print(record)
-            cur.execute(
-                "INSERT INTO aotwoint(p,q,r,s,value) VALUES(?,?,?,?,?)",
-                record,
-            )
-        cur.execute("COMMIT")
-
-def main():
-
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'file',
-        help='Two-electron integral file'
-    )
-    parser.add_argument(
-        '-l', '--list',
-        action='store_true',
-        help='List integrals on file'
-    )
-    parser.add_argument('--to-sql', action="store_true", help="Create SQL table")
-
-    args = parser.parse_args()
-
-    reader = Reader(args.file)
-    if args.list:
-        print("List integrals")
-        for ig, g in reader.list_integrals():
-            print(ig, g)
-
-    if args.to_sql:
-        con = sqlite3.connect('aotwoint.db')
-        reader.to_sql(con)
 
 
 class FReader(Reader):
@@ -248,15 +195,105 @@ class FReader(Reader):
         return Fab
 
 class SQLReader(Reader):
+    def __init__(self, filename, db=None):
+        super().__init__(filename)
+        if db:
+            self.db = db
+        else:
+            self.db = pathlib.Path(self.filename).with_suffix(".db")
+        self.con = sqlite3.connect(self.db)
+
+    def insert_integrals(self):
+        self.to_sql(self.con)
+
+    def to_sql(self, con):
+        """Create SQL table for two-electron spin-orbit integrals"""
+
+        cur = con.cursor()
+        cur.execute(
+            """
+            DROP TABLE IF EXISTS aotwoint;
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE aotwoint (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            p INTEGER,
+            q INTEGER,
+            r INTEGER,
+            s INTEGER,
+            value REAL);
+            """
+        )
+
+        # cur.execute("CREATE INDEX IF NOT EXISTS aotwoint_idx ON aotwoint(comp,p,q,r,s)")
+
+        cur.execute("BEGIN TRANSACTION")
+        for ig, g in super().list_integrals():
+            p, q, r, s = (int(_) for _ in ig)
+            g = float(g)
+            record = (p, q, r, s, g)
+            print(record)
+            cur.execute(
+                "INSERT INTO aotwoint(p,q,r,s,value) VALUES(?,?,?,?,?)",
+                record,
+            )
+        cur.execute("COMMIT")
+
     def list_integrals(self):
         """
         List two-electron spin-orbit integrals in file
         """
-        con = sqlite3.connect(self.filename)
-        cur = con.cursor()
+        cur = self.con.cursor()
         cur.execute("SELECT p, q, r, s, value FROM aotwoint")
         for ig in cur:
             yield ig[:4], ig[4]
+
+    def insert_density(self, D):
+        cur = self.con.cursor()
+        cur.execute("DROP TABLE IF EXISTS density")
+        cur.execute("CREATE TABLE density (p INTEGER, q INTEGER, value REAL)")
+        for (p, q), value in np.ndenumerate(D):
+            cur.execute("INSERT INTO density VALUES(?, ?, ?)", (p, q, value))
+        cur.execute("COMMIT")
+
+    def list_density(self):
+        cur = self.con.cursor()
+        cur.execute("SELECT p, q, value FROM density")
+        for pq in cur:
+            yield pq[:2], pq[2]
+
+    def fock(self, D, hfc=1, hfx=1):
+        raise NotImplementedError
+
+def main():
+
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'file',
+        help='Two-electron integral file'
+    )
+    parser.add_argument(
+        '-l', '--list',
+        action='store_true',
+        help='List integrals on file'
+    )
+    parser.add_argument('--to-sql', action="store_true", help="Create SQL table")
+
+    args = parser.parse_args()
+
+    reader = Reader(args.file)
+    if args.list:
+        print("List integrals")
+        for ig, g in reader.list_integrals():
+            print(ig, g)
+
+    if args.to_sql:
+        con = sqlite3.connect('aotwoint.db')
+        reader.to_sql(con)
 
 if __name__ == "__main__":
     sys.exit(main())

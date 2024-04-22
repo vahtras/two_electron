@@ -77,9 +77,11 @@ class TestH2O:
 
     # @mark.skip
     def test_insert_integrals(self):
-        self.sqlreader.insert_integrals()
-        assert len(list(self.sqlreader.list_integrals())) ==  11412
+        new = two.eri.SQLReader(self.aotwoint, db='/tmp/foo.db')
+        new.insert_integrals()
+        assert len(list(new.list_integrals())) ==  11412
 
     def test_insert_density(self):
-        self.sqlreader.insert_density(self.d)
-        assert len(list(self.sqlreader.list_density())) ==  24*24
+        new = two.eri.SQLReader(self.aotwoint, db='/tmp/foo.db')
+        new.insert_density(self.d)
+        assert len(list(new.list_density())) ==  24*24

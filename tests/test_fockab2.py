@@ -3,14 +3,16 @@ import pathlib
 import numpy as np
 import two.eri
 
-from pytest import mark
+from pytest import mark, skip
 
+np.set_printoptions(precision=6, floatmode='fixed', suppress=True)
 
 @mark.parametrize(
     'reader',
     [
-        ('reader'),
-        ('freader'),
+        'reader',
+        'freader',
+        'sqlreader'
     ]
 )
 class TestTwo:
@@ -22,6 +24,7 @@ class TestTwo:
         self.aotwoint = self.suppdir/"AOTWOINT"
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
+        self.sqlreader = two.eri.SQLReader(self.aotwoint)
 
         self.faref = np.loadtxt(self.suppdir/'fa.ref')
         self.fbref = np.loadtxt(self.suppdir/'fb.ref')
@@ -29,14 +32,19 @@ class TestTwo:
         self.daref = np.loadtxt(self.suppdir/'da.ref')
         self.dbref = np.loadtxt(self.suppdir/'db.ref')
 
+        self.sqlreader.insert_integrals()
+        self.sqlreader.insert_density(self.daref + self.daref)
+
     def test_fab(self, reader):
         """Test alpha and beta Fock matrix"""
+        if reader == 'sqlreader':
+            skip("SQL reader not implemented")
         d_a, d_b = self.daref, self.dbref
         (f_a, f_b), = getattr(self, reader).fockab((d_a, d_b))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
 
-    def test_f(self, reader):
+    def test_ftot(self, reader):
         "Test total Fock, Python version"""
         dtot = self.daref + self.dbref
         ftot = getattr(self, reader).fock(dtot)

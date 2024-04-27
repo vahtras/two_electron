@@ -287,27 +287,26 @@ class SQLReader(Reader):
         # F(r,s) = (pq|rs)D(p,q)
         # skipping diagonal part (pq|pq) to avoid double counting
         #
-        f1 = records_to_array(records1, D.shape)
+        f1 = records_to_array(records1, D.shape, symmetrize=True)
         records2 = [
             (rec[3],rec[4],rec[9])
             for rec in cur.execute(
                 """
                 SELECT *,SUM(aotwoint.value*density.value) AS fock
                 FROM aotwoint JOIN density
-                ON (p=t AND q=u) OR (p=s AND q=t)
+                ON (p=t AND q=u) OR (p=u AND q=t)
                 WHERE (p != r OR q != s)
                 GROUP BY r, s;
                 """
             )
         ]
-        f2 = records_to_array(records2, D.shape)
+        f2 = records_to_array(records2, D.shape, symmetrize=True)
         j = f1 + f2
-
 
 
         # exchange 
         # K(p, s) = (pq|rs)D(r, q)
-        records3 = [
+        records_ps = [
             (rec[1],rec[4],rec[9])
             for rec in cur.execute(
                 """
@@ -318,7 +317,7 @@ class SQLReader(Reader):
                 """
             )
         ]
-        k = records_to_array(records3, D.shape)
+        k = records_to_array(records_ps, D.shape)
 
         # K(p, r) = (pq|sr)D(s, q)
         records_pr = [
@@ -364,15 +363,76 @@ class SQLReader(Reader):
             ) ]
         k += records_to_array(records_qr, D.shape)
 
+        #K(r,q) = (pq|rs)D(p,s)
+        records_rq = [
+            (rec[3],rec[2],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (p=t AND s=u)
+                WHERE (p != r OR q != s)
+                GROUP BY r, q;
+                """
+            )
+        ]
+        k += records_to_array(records_rq, D.shape)
+
+        #K(s,q) = (pq|sr)D(p,r)
+        records_sq = [
+            (rec[4],rec[2],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (p=t AND r=u)
+                WHERE (p != r OR q != s) AND (r != s)
+                GROUP BY s, q;
+                """
+            )
+        ]
+        k += records_to_array(records_sq, D.shape)
+
+        #K(r,p) = (qp|rs)D(q,s)
+        records_rp = [
+            (rec[3],rec[1],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (q=t AND s=u)
+                WHERE (p != r OR q != s) AND (p != q)
+                GROUP BY r, p;
+                """
+            )
+        ]
+        k += records_to_array(records_rp, D.shape)
+
+        #K(s,p) = (qp|sr)D(q,r)
+        records_sp = [
+            (rec[4],rec[1],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (q=t AND r=u)
+                WHERE (p != r OR q != s) AND (p != q) AND (r != s)
+                GROUP BY s, p;
+                """
+            )
+        ]
+        k += records_to_array(records_sp, D.shape)
+
         f = hfc*j - 0.5*hfx*k
         return f
 
 
-def records_to_array(records, shape):
+def records_to_array(records, shape, symmetrize=False):
     f = np.zeros(shape)
     for p, q, value in records:
         f[p, q] = value
-        f[q, p] = value
+        if symmetrize:
+            f[q, p] = value
     return f
 
 

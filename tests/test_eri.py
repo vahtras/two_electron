@@ -71,6 +71,7 @@ class TestH2O:
 
         self.d = np.loadtxt(suppdir / 'dcao').reshape((24, 24))
         self.f = np.loadtxt(suppdir / 'fcao').reshape((24, 24))
+        self.sqlreader.insert_density(self.d)
 
     @mark.parametrize(
         'reader',
@@ -82,7 +83,7 @@ class TestH2O:
 
     @mark.parametrize(
         'reader',
-        ["reader", "freader"]#, "sqlreader"]
+        ["reader", "freader", "sqlreader"]
     ) 
     def test_dens_fock(self, reader):
         fock = getattr(self, reader).fock(self.d)

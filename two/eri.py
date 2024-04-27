@@ -36,7 +36,8 @@ class Reader:
         List two-electron spin-orbit integrals in file
         """
         for buf, ibuf in self.list_buffers():
-            for g, ig in zip(buf, ibuf):
+            integrals = zip(buf, ibuf)
+            for g, ig in integrals:
                 yield tuple(ig), g
 
     def list_buffers(self, label="BASTWOEL"):
@@ -74,6 +75,7 @@ class Reader:
                 g *= .5
             if (p == r and q == s):
                 g *= .5
+
 
             Jadd = g * (D[r, s] + D[s, r])
             J[p, q] += Jadd
@@ -233,8 +235,8 @@ class SQLReader(Reader):
         for ig, g in super().list_integrals():
             p, q, r, s = (int(_) for _ in ig)
             g = float(g)
+            s, r, q, p = (p-1, q-1, r-1, s-1)
             record = (p, q, r, s, g)
-            print(record)
             cur.execute(
                 "INSERT INTO aotwoint(p,q,r,s,value) VALUES(?,?,?,?,?)",
                 record,
@@ -253,19 +255,126 @@ class SQLReader(Reader):
     def insert_density(self, D):
         cur = self.con.cursor()
         cur.execute("DROP TABLE IF EXISTS density")
-        cur.execute("CREATE TABLE density (p INTEGER, q INTEGER, value REAL)")
-        for (p, q), value in np.ndenumerate(D):
-            cur.execute("INSERT INTO density VALUES(?, ?, ?)", (p, q, value))
+        cur.execute("CREATE TABLE density (t INTEGER, u INTEGER, value REAL)")
+        for (t, u), value in np.ndenumerate(D):
+            cur.execute("INSERT INTO density VALUES(?, ?, ?)", (t, u, value))
         cur.execute("COMMIT")
 
     def list_density(self):
         cur = self.con.cursor()
-        cur.execute("SELECT p, q, value FROM density")
+        cur.execute("SELECT t, u, value FROM density")
         for pq in cur:
             yield pq[:2], pq[2]
 
     def fock(self, D, hfc=1, hfx=1):
-        raise NotImplementedError
+        self.insert_density(D)
+        cur = self.con.cursor()
+        #
+        # F(p,q) = (pq|rs)D(r,s)
+        #
+        records1 = [
+            (rec[1],rec[2],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock
+                FROM aotwoint JOIN density
+                ON (r=t AND s=u) OR (r=u AND s=t)
+                GROUP BY p, q;
+                """
+            )
+        ]
+        #
+        # F(r,s) = (pq|rs)D(p,q)
+        # skipping diagonal part (pq|pq) to avoid double counting
+        #
+        f1 = records_to_array(records1, D.shape)
+        records2 = [
+            (rec[3],rec[4],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock
+                FROM aotwoint JOIN density
+                ON (p=t AND q=u) OR (p=s AND q=t)
+                WHERE (p != r OR q != s)
+                GROUP BY r, s;
+                """
+            )
+        ]
+        f2 = records_to_array(records2, D.shape)
+        j = f1 + f2
+
+
+
+        # exchange 
+        # K(p, s) = (pq|rs)D(r, q)
+        records3 = [
+            (rec[1],rec[4],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (r=t AND q=u)
+                GROUP BY p, s;
+                """
+            )
+        ]
+        k = records_to_array(records3, D.shape)
+
+        # K(p, r) = (pq|sr)D(s, q)
+        records_pr = [
+            (rec[1],rec[3],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (s=t AND q=u)
+                WHERE r != s
+                GROUP BY p, r;
+                """
+            )
+        ]
+        k += records_to_array(records_pr, D.shape)
+
+        # K(q, s) = (qp|rs)D(r, p)
+        records_qs = [
+            (rec[2],rec[4],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (r=t AND p=u)
+                where p != q
+                GROUP BY q, s;
+                """
+            )
+        ]
+        k += records_to_array(records_qs, D.shape)
+
+        # K(q, r) = (qp|sr)D(s, p)
+        records_qr = [
+            (rec[2],rec[3],rec[9])
+            for rec in cur.execute(
+                """
+                SELECT *,SUM(aotwoint.value*density.value) AS fock 
+                FROM aotwoint JOIN density 
+                ON (s=t AND p=u)
+                WHERE p != q AND r != s
+                GROUP BY q, r;
+                """
+            ) ]
+        k += records_to_array(records_qr, D.shape)
+
+        f = hfc*j - 0.5*hfx*k
+        return f
+
+
+def records_to_array(records, shape):
+    f = np.zeros(shape)
+    for p, q, value in records:
+        f[p, q] = value
+        f[q, p] = value
+    return f
+
 
 def main():
 
@@ -281,7 +390,7 @@ def main():
         action='store_true',
         help='List integrals on file'
     )
-    parser.add_argument('--to-sql', action="store_true", help="Create SQL table")
+    parser.add_argument('--to-sql', default=None, help="Create SQL table")
 
     args = parser.parse_args()
 
@@ -292,8 +401,7 @@ def main():
             print(ig, g)
 
     if args.to_sql:
-        con = sqlite3.connect('aotwoint.db')
-        reader.to_sql(con)
+        SQLReader(args.file, db=args.to_sql).insert_integrals()
 
 if __name__ == "__main__":
     sys.exit(main())

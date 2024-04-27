@@ -15,6 +15,7 @@ class TestERI:
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
         self.sqlreader = two.eri.SQLReader(self.aotwoint, db=None)
+        self.sqlreader.insert_integrals()
 
     def test_basinfo(self):
         info = self.reader.basinfo()
@@ -32,7 +33,29 @@ class TestERI:
         for ig, g in getattr(self, reader).list_integrals():
             break
         assert g == approx(4.78506540471)
-        assert ig  == (1, 1, 1, 1)
+        if reader == 'sqlreader':
+            assert ig  == (0, 0, 0, 0)
+        else:
+            assert ig  == (1, 1, 1, 1)
+
+    def test_coulomb(self):
+        dens = np.eye(7)
+        f1 = self.reader.fock(dens, hfx=0)
+        f2 = self.sqlreader.fock(dens, hfx=0)
+        np.testing.assert_almost_equal(f1, f2)
+
+    def test_exchange(self):
+        dens = np.eye(7)
+        f1 = self.reader.fock(dens, hfc=0, hfx=-2)
+        f2 = self.sqlreader.fock(dens, hfc=0, hfx=-2)
+        np.testing.assert_almost_equal(f1, f2)
+
+    def test_total_fock(self):
+        dens = np.eye(7)
+        f1 = self.reader.fock(dens)
+        f2 = self.sqlreader.fock(dens)
+        np.testing.assert_almost_equal(f1, f2)
+
 
 
 class TestH2O:
@@ -44,28 +67,25 @@ class TestH2O:
         self.reader = two.eri.Reader(self.aotwoint)
         self.freader = two.eri.FReader(self.aotwoint)
         self.sqlreader = two.eri.SQLReader(self.aotwoint, db=self.db)
+        self.sqlreader.insert_integrals()
 
         self.d = np.loadtxt(suppdir / 'dcao').reshape((24, 24))
         self.f = np.loadtxt(suppdir / 'fcao').reshape((24, 24))
 
-    def test_number_of_integrals_orig(self):
-        assert len(list(self.reader.list_integrals())) ==  11412
+    @mark.parametrize(
+        'reader',
+        ["reader", "sqlreader"]
+    ) 
+    def test_number_of_integrals(self, reader):
+        assert len(list(getattr(self,reader).list_integrals())) ==  11412
 
-    def test_number_of_integrals_sql(self):
-        # self.sqlreader.insert_integrals()
-        assert len(list(self.sqlreader.list_integrals())) ==  11412
 
-    def test_dens_fock_py(self):
-        fock = self.reader.fock(self.d)
-        np.testing.assert_almost_equal(fock, self.f)
-
-    def test_dens_fock_f(self):
-        fock = self.freader.fock(self.d)
-        np.testing.assert_almost_equal(fock, self.f)
-
-    @mark.skip
-    def test_dens_fock_sql(self):
-        fock = self.sqlreader.fock(self.d)
+    @mark.parametrize(
+        'reader',
+        ["reader", "freader"]#, "sqlreader"]
+    ) 
+    def test_dens_fock(self, reader):
+        fock = getattr(self, reader).fock(self.d)
         np.testing.assert_almost_equal(fock, self.f)
 
     @patch('two.eri.Reader.list_integrals')

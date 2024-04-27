@@ -5,6 +5,7 @@ import pathlib
 import numpy as np
 import two.eri
 import pytest
+from unittest.mock import patch
 
 
 class TestTwo:

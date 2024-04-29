@@ -254,10 +254,12 @@ class SQLReader(Reader):
 
     def insert_density(self, D):
         cur = self.con.cursor()
-        cur.execute("DROP TABLE IF EXISTS density")
-        cur.execute("CREATE TABLE density (t INTEGER, u INTEGER, value REAL)")
+        cur.execute("DROP TABLE IF EXISTS density;")
+        cur.execute("CREATE TABLE density (t INTEGER, u INTEGER, value REAL);")
         for (t, u), value in np.ndenumerate(D):
-            cur.execute("INSERT INTO density VALUES(?, ?, ?)", (t, u, value))
+            if abs(value) < 1e-10:
+                continue
+            cur.execute("INSERT INTO density VALUES(?, ?, ?);", (t, u, value))
         cur.execute("COMMIT")
 
     def list_density(self):

@@ -274,9 +274,7 @@ class SQLReader(Reader):
         #
         # F(p,q) = (pq|rs)D(r,s)
         #
-        records1a = [
-            rec
-            for rec in cur.execute(
+        records1a = cur.execute(
                 """
                 SELECT p,q,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density
@@ -284,12 +282,9 @@ class SQLReader(Reader):
                 GROUP BY p, q;
                 """
             )
-        ] 
-        f1 = records_to_array(records1a, D.shape, symmetrize=True)
+        j = records_to_array(records1a, D.shape, symmetrize=True)
 
-        records1b = [
-            rec
-            for rec in cur.execute(
+        records1b = cur.execute(
                 """
                 SELECT p,q,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density
@@ -298,15 +293,12 @@ class SQLReader(Reader):
                 GROUP BY p, q;
                 """
             )
-        ] 
-        f1 += records_to_array(records1b, D.shape, symmetrize=True)
+        j += records_to_array(records1b, D.shape, symmetrize=True)
         #
         # F(r,s) = (pq|rs)D(p,q)
         # skipping diagonal part (pq|pq) to avoid double counting
         #
-        records2a = [
-            rec
-            for rec in cur.execute(
+        records2a = cur.execute(
                 """
                 SELECT r,s,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density
@@ -315,12 +307,9 @@ class SQLReader(Reader):
                 GROUP BY r, s;
                 """
             )
-        ]
-        f2 = records_to_array(records2a, D.shape, symmetrize=True)
+        j += records_to_array(records2a, D.shape, symmetrize=True)
 
-        records2b = [
-            rec
-            for rec in cur.execute(
+        records2b = cur.execute(
                 """
                 SELECT r,s,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density
@@ -329,31 +318,22 @@ class SQLReader(Reader):
                 GROUP BY r, s;
                 """
             )
-        ]
-        f2 += records_to_array(records2b, D.shape, symmetrize=True)
-
-        j = f1 + f2
-
+        j += records_to_array(records2b, D.shape, symmetrize=True)
 
         # exchange 
         # K(p, s) = (pq|rs)D(r, q)
-        records_ps = [
-            (rec[0],rec[3],rec[-1])
-            for rec in cur.execute(
+        records_ps = cur.execute(
                 """
-                SELECT p,q,r,s,t,u,SUM(aotwoint.value*density.value)
+                SELECT p,s,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (r=t AND q=u)
                 GROUP BY p, s;
                 """
             )
-        ]
         k = records_to_array(records_ps, D.shape)
 
         # K(p, r) = (pq|sr)D(s, q)
-        records_pr = [
-            rec
-            for rec in cur.execute(
+        records_pr = cur.execute(
                 """
                 SELECT p,r,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -362,13 +342,10 @@ class SQLReader(Reader):
                 GROUP BY p, r;
                 """
             )
-        ]
         k += records_to_array(records_pr, D.shape)
 
         # K(q, s) = (qp|rs)D(r, p)
-        records_qs = [
-            rec
-            for rec in cur.execute(
+        records_qs = cur.execute(
                 """
                 SELECT q,s,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -377,13 +354,10 @@ class SQLReader(Reader):
                 GROUP BY q, s;
                 """
             )
-        ]
         k += records_to_array(records_qs, D.shape)
 
         # K(q, r) = (qp|sr)D(s, p)
-        records_qr = [
-            rec
-            for rec in cur.execute(
+        records_qr = cur.execute(
                 """
                 SELECT q,r,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -391,13 +365,11 @@ class SQLReader(Reader):
                 WHERE p != q AND r != s
                 GROUP BY q, r;
                 """
-            ) ]
+            ) 
         k += records_to_array(records_qr, D.shape)
 
         #K(r,q) = (pq|rs)D(p,s)
-        records_rq = [
-            rec
-            for rec in cur.execute(
+        records_rq = cur.execute(
                 """
                 SELECT r,q,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -406,13 +378,10 @@ class SQLReader(Reader):
                 GROUP BY r, q;
                 """
             )
-        ]
         k += records_to_array(records_rq, D.shape)
 
         #K(s,q) = (pq|sr)D(p,r)
-        records_sq = [
-            rec
-            for rec in cur.execute(
+        records_sq = cur.execute(
                 """
                 SELECT s,q,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -421,13 +390,10 @@ class SQLReader(Reader):
                 GROUP BY s, q;
                 """
             )
-        ]
         k += records_to_array(records_sq, D.shape)
 
         #K(r,p) = (qp|rs)D(q,s)
-        records_rp = [
-            rec
-            for rec in cur.execute(
+        records_rp = cur.execute(
                 """
                 SELECT r,p,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -436,13 +402,10 @@ class SQLReader(Reader):
                 GROUP BY r, p;
                 """
             )
-        ]
         k += records_to_array(records_rp, D.shape)
 
         #K(s,p) = (qp|sr)D(q,r)
-        records_sp = [
-            rec
-            for rec in cur.execute(
+        records_sp = cur.execute(
                 """
                 SELECT s,p,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
@@ -451,7 +414,6 @@ class SQLReader(Reader):
                 GROUP BY s, p;
                 """
             )
-        ]
         k += records_to_array(records_sp, D.shape)
 
         f = hfc*j - 0.5*hfx*k

@@ -276,10 +276,10 @@ class SQLReader(Reader):
         #
         if True:
             records1a = [
-                (rec[1],rec[2],rec[9])
+                rec
                 for rec in cur.execute(
                     """
-                    SELECT *,SUM(aotwoint.value*density.value)
+                    SELECT p,q,SUM(aotwoint.value*density.value)
                     FROM aotwoint JOIN density
                     ON (r=t AND s=u)
                     GROUP BY p, q;
@@ -287,10 +287,10 @@ class SQLReader(Reader):
                 )
             ] 
             records1b = [
-                (rec[1],rec[2],rec[9])
+                rec
                 for rec in cur.execute(
                     """
-                    SELECT *,SUM(aotwoint.value*density.value)
+                    SELECT p,q,SUM(aotwoint.value*density.value)
                     FROM aotwoint JOIN density
                     ON (r=u AND s=t)
                     WHERE r != s
@@ -302,10 +302,10 @@ class SQLReader(Reader):
             f1 += records_to_array(records1b, D.shape, symmetrize=True)
         else:
             records1 = [
-                (rec[1],rec[2],rec[9])
+                (rec[0],rec[1],rec[-1])
                 for rec in cur.execute(
                     """
-                    SELECT *,SUM(aotwoint.value*density.value)
+                    SELECT p,q,r,s,t,u,SUM(aotwoint.value*density.value)
                     FROM aotwoint JOIN density
                     ON (r=t AND s=u) OR (r=u AND s=t)
                     GROUP BY p, q;
@@ -319,10 +319,10 @@ class SQLReader(Reader):
         #
         if True:
             records2a = [
-                (rec[3],rec[4],rec[9])
+                rec
                 for rec in cur.execute(
                     """
-                    SELECT *,SUM(aotwoint.value*density.value)
+                    SELECT r,s,SUM(aotwoint.value*density.value)
                     FROM aotwoint JOIN density
                     ON (p=t AND q=u)
                     WHERE NOT (p = r AND q = s)
@@ -331,10 +331,10 @@ class SQLReader(Reader):
                 )
             ]
             records2b = [
-                (rec[3],rec[4],rec[9])
+                rec
                 for rec in cur.execute(
                     """
-                    SELECT *,SUM(aotwoint.value*density.value)
+                    SELECT r,s,SUM(aotwoint.value*density.value)
                     FROM aotwoint JOIN density
                     ON (p=u AND q=t)
                     WHERE NOT (p = r AND q = s) AND p != q
@@ -346,10 +346,10 @@ class SQLReader(Reader):
             f2 += records_to_array(records2b, D.shape, symmetrize=True)
         else:
             records2 = [
-                (rec[3],rec[4],rec[9])
+                (rec[2],rec[3],rec[-1])
                 for rec in cur.execute(
                     """
-                    SELECT *,SUM(aotwoint.value*density.value)
+                    SELECT p,q,r,s,t,u,SUM(aotwoint.value*density.value)
                     FROM aotwoint JOIN density
                     ON (p=t AND q=u) OR (p=u AND q=t)
                     WHERE (p != r OR q != s)
@@ -364,10 +364,10 @@ class SQLReader(Reader):
         # exchange 
         # K(p, s) = (pq|rs)D(r, q)
         records_ps = [
-            (rec[1],rec[4],rec[9])
+            (rec[0],rec[3],rec[-1])
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT p,q,r,s,t,u,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (r=t AND q=u)
                 GROUP BY p, s;
@@ -378,10 +378,10 @@ class SQLReader(Reader):
 
         # K(p, r) = (pq|sr)D(s, q)
         records_pr = [
-            (rec[1],rec[3],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT p,r,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (s=t AND q=u)
                 WHERE r != s
@@ -393,10 +393,10 @@ class SQLReader(Reader):
 
         # K(q, s) = (qp|rs)D(r, p)
         records_qs = [
-            (rec[2],rec[4],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT q,s,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (r=t AND p=u)
                 where p != q
@@ -408,10 +408,10 @@ class SQLReader(Reader):
 
         # K(q, r) = (qp|sr)D(s, p)
         records_qr = [
-            (rec[2],rec[3],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT q,r,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (s=t AND p=u)
                 WHERE p != q AND r != s
@@ -422,10 +422,10 @@ class SQLReader(Reader):
 
         #K(r,q) = (pq|rs)D(p,s)
         records_rq = [
-            (rec[3],rec[2],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT r,q,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (p=t AND s=u)
                 WHERE NOT (p = r AND q = s)
@@ -437,10 +437,10 @@ class SQLReader(Reader):
 
         #K(s,q) = (pq|sr)D(p,r)
         records_sq = [
-            (rec[4],rec[2],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT s,q,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (p=t AND r=u)
                 WHERE NOT(p = r AND q = s) AND (r != s)
@@ -452,10 +452,10 @@ class SQLReader(Reader):
 
         #K(r,p) = (qp|rs)D(q,s)
         records_rp = [
-            (rec[3],rec[1],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT r,p,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (q=t AND s=u)
                 WHERE NOT(p = r AND q = s) AND (p != q)
@@ -467,10 +467,10 @@ class SQLReader(Reader):
 
         #K(s,p) = (qp|sr)D(q,r)
         records_sp = [
-            (rec[4],rec[1],rec[9])
+            rec
             for rec in cur.execute(
                 """
-                SELECT *,SUM(aotwoint.value*density.value)
+                SELECT s,p,SUM(aotwoint.value*density.value)
                 FROM aotwoint JOIN density 
                 ON (q=t AND r=u)
                 WHERE NOT(p = r AND q = s) AND (p != q) AND (r != s)

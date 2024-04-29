@@ -85,8 +85,9 @@ class TestH2O:
         'reader',
         ["reader", "freader", "sqlreader"]
     ) 
-    def test_dens_fock(self, reader):
-        fock = getattr(self, reader).fock(self.d)
+    def test_dens_fock(self, reader, benchmark):
+        # fock = getattr(self, reader).fock(self.d)
+        fock = benchmark(getattr(self, reader).fock, self.d)
         np.testing.assert_almost_equal(fock, self.f)
 
     @patch('two.eri.Reader.list_integrals')
@@ -96,12 +97,12 @@ class TestH2O:
         two.eri.main()
         mock_list.assert_called_once_with()
 
-    # @mark.skip
     def test_insert_integrals(self):
         new = two.eri.SQLReader(self.aotwoint, db='/tmp/foo.db')
         new.insert_integrals()
         assert len(list(new.list_integrals())) ==  11412
 
+    @mark.skip('Not applicable with screening')
     def test_insert_density(self):
         new = two.eri.SQLReader(self.aotwoint, db='/tmp/foo.db')
         new.insert_density(self.d)

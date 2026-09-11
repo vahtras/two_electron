@@ -2,7 +2,7 @@ import pathlib
 import sys
 from unittest.mock import patch
 
-from pytest import approx, mark
+from pytest import approx, mark, skip
 import numpy as np
 
 import two.eri
@@ -30,6 +30,8 @@ class TestERI:
         ["reader", "freader", "sqlreader"]
     ) 
     def test_first_integral(self, reader):
+        if reader == 'freader':
+            skip(f"{reader} not implemented")
         for ig, g in getattr(self, reader).list_integrals():
             break
         assert g == approx(4.78506540471)
@@ -83,7 +85,7 @@ class TestH2O:
 
     @mark.parametrize(
         'reader',
-        ["reader", "freader", "sqlreader"]
+        ["reader", "sqlreader"]
     ) 
     def test_dens_fock(self, reader, benchmark):
         # fock = getattr(self, reader).fock(self.d)

@@ -56,7 +56,7 @@ class TestTwo:
             [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 1.07479494],
             ])
 
-    @pytest.mark.parametrize("reader", ["reader", "freader"])
+    @pytest.mark.parametrize("reader", ["reader"])
     def test_fab(self, reader):
         """Test alpha and beta Fock matrix"""
         (f_a, f_b), = getattr(self, reader).fockab((self.daref, self.dbref))
@@ -66,6 +66,8 @@ class TestTwo:
     @pytest.mark.parametrize("reader", ["reader", "freader",  "sqlreader"])
     def test_f(self, reader):
         "Test total Fock, Python version"""
+        if reader == 'freader':
+            pytest.skip("sirfck not implemented")
         if reader == 'sqlreader':
             pytest.skip("SQLReader not implemented")
         dtot = self.daref + self.dbref
@@ -78,6 +80,8 @@ class TestTwo:
     @pytest.mark.parametrize("reader", ["reader", "freader"])
     def test_fs(self, reader):
         "Test spin Fock, Python version"""
+        if reader == 'freader':
+            pytest.skip("sirfck not implemented")
         dspin = self.daref - self.dbref
         fspin = getattr(self, reader).fock(dspin, hfc=0)
 

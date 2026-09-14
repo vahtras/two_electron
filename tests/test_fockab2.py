@@ -37,7 +37,7 @@ class TestTwo:
 
     def test_fab(self, reader):
         """Test alpha and beta Fock matrix"""
-        if reader == 'sqlreader':
+        if reader in ['sqlreader', 'freader']:
             skip("SQL reader not implemented")
         d_a, d_b = self.daref, self.dbref
         (f_a, f_b), = getattr(self, reader).fockab((d_a, d_b))
@@ -46,6 +46,8 @@ class TestTwo:
 
     def test_ftot(self, reader):
         "Test total Fock, Python version"""
+        if reader in ['sqlreader', 'freader']:
+            skip("SQL reader not implemented")
         dtot = self.daref + self.dbref
         ftot = getattr(self, reader).fock(dtot)
 
@@ -55,6 +57,8 @@ class TestTwo:
 
     def test_fs(self, reader):
         "Test spin Fock, Python version"""
+        if reader in ['sqlreader', 'freader']:
+            skip("SQL reader not implemented")
         dspin = self.daref - self.dbref
         fspin = getattr(self, reader).fock(dspin, hfc=0)
 

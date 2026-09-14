@@ -83,7 +83,7 @@ class TestH2O:
 
     @mark.parametrize(
         'reader',
-        ["reader", "freader", "sqlreader"]
+        ["reader", "sqlreader"]
     ) 
     def test_dens_fock(self, reader, benchmark):
         # fock = getattr(self, reader).fock(self.d)

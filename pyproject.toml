@@ -1,0 +1,16 @@
+[project]
+name = "two-electron"
+version = "1.2.0a"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "blocked-matrix-utils>=1.1.0",
+    "fortran-binary>=1.0.8",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-benchmark>=5.3.0",
+]

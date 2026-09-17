@@ -186,7 +186,7 @@ class FReader(Reader):
             Das[:, :, i] = Da
             Dbs[:, :, i] = Db
         for buf, ibuf in self.list_buffers():
-            Js, Kas, Kbs = sirfck.fckab(
+            sirfck.fckab(
                 Js, Kas, Kbs, Das, Dbs, buf, ibuf.T
                 )
 

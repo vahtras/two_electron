@@ -103,7 +103,7 @@ def fock_builder_f(Dab, **kwargs):
         Das[:, :, i] = Da
         Dbs[:, :, i] = Db
     for buf, ibuf in list_buffers(filename):
-        Js, Kas, Kbs = sirfck.fckab(
+        sirfck.fckab(
             Js, Kas, Kbs, Das, Dbs, buf, ibuf.T
             )
 

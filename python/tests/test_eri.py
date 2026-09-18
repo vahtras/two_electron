@@ -84,18 +84,14 @@ class TestH2O:
 
     @mark.parametrize(
         'reader',
-        ["reader", "sqlreader"]
+        ["reader", "sqlreader", "freader"]
     ) 
     def test_number_of_integrals(self, reader):
         assert len(list(getattr(self,reader).list_integrals())) ==  11412
 
 
-    @mark.parametrize(
-        'reader',
-        ["reader", "sqlreader"]
-    ) 
+    @mark.parametrize('reader', ["reader", "sqlreader", "freader"]) 
     def test_dens_fock(self, reader, benchmark):
-        # fock = getattr(self, reader).fock(self.d)
         fock = benchmark(getattr(self, reader).fock, self.d)
         np.testing.assert_almost_equal(fock, self.f)
 

@@ -164,7 +164,7 @@ class FReader(Reader):
         K = np.zeros(D.shape)
 
         for buf, ibuf in self.list_buffers():
-            J, K = sirfck.fck(
+            sirfck.fck(
                 J, K,  D, D, buf, ibuf.T
                 )
 

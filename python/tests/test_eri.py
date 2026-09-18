@@ -7,6 +7,8 @@ import numpy as np
 
 import two.eri
 
+READERS = ['reader', 'freader', 'sqlreader']
+
 class TestERI:
     def setup_method(self):
         suppdir  = pathlib.Path(__file__).with_suffix(".d")
@@ -25,13 +27,10 @@ class TestERI:
         assert info["nibuf"] == 1
         assert info["nbits"] == 8
 
-    @mark.parametrize(
-        'reader',
-        ["reader", "freader", "sqlreader"]
-    ) 
+    @mark.parametrize('reader', READERS)
     def test_first_integral(self, reader):
-        if reader == 'freader':
-            skip(f"{reader} not implemented")
+#       if reader == 'freader':
+#           skip(f"{reader} not implemented")
         for ig, g in getattr(self, reader).list_integrals():
             break
         assert g == approx(4.78506540471)
@@ -46,16 +45,24 @@ class TestERI:
         f2 = self.sqlreader.fock(dens, hfx=0)
         np.testing.assert_almost_equal(f1, f2)
 
+        f2 = self.freader.fock(dens, hfx=0)
+        np.testing.assert_almost_equal(f1, f2)
+
     def test_exchange(self):
         dens = np.eye(7)
         f1 = self.reader.fock(dens, hfc=0, hfx=-2)
         f2 = self.sqlreader.fock(dens, hfc=0, hfx=-2)
         np.testing.assert_almost_equal(f1, f2)
 
+        f2 = self.freader.fock(dens, hfc=0, hfx=-2)
+        np.testing.assert_almost_equal(f1, f2)
+
     def test_total_fock(self):
         dens = np.eye(7)
         f1 = self.reader.fock(dens)
         f2 = self.sqlreader.fock(dens)
+        np.testing.assert_almost_equal(f1, f2)
+        f2 = self.freader.fock(dens)
         np.testing.assert_almost_equal(f1, f2)
 
 

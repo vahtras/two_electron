@@ -59,8 +59,6 @@ class TestTwo:
     @pytest.mark.parametrize("reader", ["reader", "freader"])
     def test_fab(self, reader):
         """Test alpha and beta Fock matrix"""
-        #if reader == 'freader':
-        #    pytest.skip("FReader not implemented")
         (f_a, f_b), = getattr(self, reader).fockab((self.daref, self.dbref))
         np.testing.assert_allclose(f_a, self.faref)
         np.testing.assert_allclose(f_b, self.fbref)
@@ -81,8 +79,8 @@ class TestTwo:
 
     @pytest.mark.parametrize("reader", ["reader", "freader"])
     def test_fs(self, reader):
-        if reader == 'freader':
-            pytest.skip("FReader not implemented")
+        #if reader == 'freader':
+        #    pytest.skip("FReader not implemented")
         "Test spin Fock, Python version"""
         dspin = self.daref - self.dbref
         fspin = getattr(self, reader).fock(dspin, hfc=0)

@@ -181,7 +181,7 @@ def fock(D, filename="AOTWOINT", hfc=1, hfx=1, f2py=True):
 
     if f2py:
         for buf, ibuf in list_buffers(filename):
-            J, K = sirfck.fck(
+            sirfck.fck(
                 J, K,  D, D, buf, ibuf.T
                 )
     else:

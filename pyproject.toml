@@ -17,6 +17,7 @@ tests = [
 ]
 [tool.maturin]
 python-source = "python"
+python-packages = ["two"]
 exclude = [
     "**/__pycache__",
     "**/*.pyc",

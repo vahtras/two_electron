@@ -1,2 +1,0 @@
-blocked-matrix-utils==1.0.5
-fortran-binary==1.0.4
